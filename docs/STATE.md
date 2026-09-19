@@ -2,6 +2,8 @@
 
 Last updated: 2026-09-19. Read this first when resuming.
 
+> **Next session — agreed, ready to start.** Jump to [Next session](#next-session).
+
 ## The one-paragraph version
 
 studykb is built and verified against the real corpus: 15 sources, ~4,250 pages,
@@ -72,6 +74,76 @@ uv run studykb review --corpus qml-master --root /home/locode/Personale/QML
 **16 October 2026** — the thesis project is *presented*, not started. In-person
 teaching begins 12 October with Corazza and Fasano in the room; speak to them
 before the 16th. Module 8 assessment is 7 November.
+
+## Next session
+
+Two pieces of work, both decided. Do them in this order.
+
+### 1. Split the index by authority
+
+**The problem.** Lecture material and reference material carry the same weight
+in search results. A lecturer speaking off the cuff, and an automatic subtitle
+on top of that, can be wrong. A textbook is not. And separately: knowing
+whether a topic was *covered in the course* is what decides whether it is on
+the exam.
+
+**The design, agreed.** One index, not two. A new `authority` field on every
+chunk:
+
+| value | sources |
+|---|---|
+| `reference` | books, papers |
+| `course` | slides, transcripts, captions |
+
+**Slides count as `course`** — decided. They are written and reviewed, so more
+reliable than a recording, but for the question "is this on the syllabus?" they
+are course material.
+
+Two separate collections were considered and rejected: two searches per
+question, scores that cannot be ranked together, and every piece of
+infrastructure doubled. The `type` field already separates the data; what is
+missing is a single axis and a tool that compares across it.
+
+**To build:**
+
+1. `authority` on `SourceRule` in `config.py`, declared per glob in
+   `corpus.yaml`, defaulting from the type (book/paper → reference, everything
+   else → course).
+2. Carry it into the chunk payload (`types.py::Chunk.payload`) and add it to
+   `index.KEYWORD_FIELDS` so it can be filtered.
+3. `--authority` on `studykb search`, and the same argument on `kb_search`.
+4. A new MCP tool `kb_crosscheck(topic)`: searches both sides and returns them
+   labelled, so an answer can read *"covered in the course on 29/05, slides
+   23-27; the textbook confirms it at Nielsen & Chuang p.72"* — or *"not
+   covered in the course; present in Schuld ch. 8, probably out of scope"*.
+5. Bump the embed fingerprint: the payload changes, so everything reindexes
+   (~15 min).
+
+**Gate:** `kb_crosscheck("Grover")` must return both sides labelled correctly,
+and `search --authority reference` must return no slides or transcripts.
+
+### 2. Produce one module's notes as a format sample
+
+Never done once. `vault/10-modules/` does not exist.
+
+Pick one lecture from M4 (it has 972 chunks and real material), follow
+`docs/agents/note-synthesis.md`, and produce the note. He reviews the **format**
+before it is applied to anything else.
+
+A worked example of the intended shape, from a live `kb_search` on M4:
+
+> ### Grover's algorithm
+> **The problem.** A search space of N items, no knowledge of how they are
+> organised; find the one with a given property. [Nielsen & Chuang p.72]
+> **The result.** Classically ~N operations; the quantum algorithm needs ~√N. [p.72]
+> **Careful.** Quadratic speedup, not exponential. Shor is exponential, Grover is not. [p.72]
+
+### Also queued
+
+The re-ingest described above — run it first, since both tasks need a current
+index.
+
+---
 
 ## Orientation
 
