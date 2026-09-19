@@ -41,6 +41,10 @@ extract:
     enabled: true
     # Few characters *and* images present means the meaning lives in the figure.
     trigger_chars_per_page: 250
+    # A cover carries one image; a blank page carries none. A real figure page
+    # carries dozens of vector ops. Below this, there is nothing to describe and
+    # the model will invent something rather than say so.
+    min_graphics: 12
     render_dpi: 150
     timeout_s: 180
 

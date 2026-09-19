@@ -49,6 +49,20 @@ name — which a dense embedder smooths away. It costs one prefetch and no
 dependency. Real BM25 or a cross-encoder goes in if a concrete query is found to
 fail.
 
+**Vision is off for prose, and that was a measured result, not a guess.**
+The first run captioned books as well as slides. Two things went wrong. The
+`auto` trigger fires on low-text pages, and in a book those are the covers,
+title pages and blanks — the real figures live on pages surrounded by text and
+were never sent. And on a cover, qwen2.5-vl:7b does not answer "this is a
+cover": it pattern-completes from the title. Page 1 of Nielsen & Chuang came
+back as "a circuit diagram with qubits labelled A, B, C, a Hadamard gate and a
+table below" — the page is the front cover. Fabricated text entering the index
+under a provenance tag most readers will skim past is worse than no text, so
+books and papers are now `vision: never`, a graphics floor keeps covers and
+blanks away from the model even on slides, and the prompt names the cover case
+explicitly. Slides remain worth captioning: there the content genuinely is the
+figure.
+
 **OCR writes a copy.** The corpus is mounted read-only. Some of this material
 exists in one copy only, and a pipeline that rewrites originals in place is one
 bad ocrmypdf run from losing a book.

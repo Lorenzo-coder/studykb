@@ -37,16 +37,25 @@ sources:
     vision: force             # slides carry meaning in figures; always caption
   - glob: "slides/**/*.pptx"
     type: slides
+  # Vision is off for prose. Measured on this corpus: on books the auto
+  # trigger only ever fires on covers, title pages and blanks — the low-text
+  # pages — while real figures sit on pages full of surrounding text. Worse,
+  # on a cover the 7B model pattern-completes from the title and invents a
+  # circuit diagram that was never there. Captioning prose is net-negative.
   - glob: "books/**/*.pdf"
     type: book
+    vision: never
   - glob: "Book/**/*.pdf"     # the folder as it exists today
     type: book
+    vision: never
   - glob: "papers/**/*.pdf"
     type: paper
+    vision: never
   - glob: "**/*.pptx"
     type: slides
   - glob: "**/*.pdf"          # anything not placed above
     type: paper
+    vision: never
 
 # Enrolment forms, invoices and bookings sit in the same folders as the study
 # material. They are not study material and they poison retrieval.

@@ -34,7 +34,10 @@ services:
       - ${CORPUS_DIR:?set CORPUS_DIR in .env}:/corpus:ro
       - ${VAULT_DIR:?set VAULT_DIR in .env}:/vault
       - studykb_state:/data
-    # One-shot by default; `docker compose run --rm studykb ingest --corpus ...`.
+    # One-shot only. The profile keeps it out of `compose up`, where it would
+    # start, print help and exit for no reason; `compose run` activates the
+    # profile on its own.
+    profiles: ["cli"]
     command: ["--help"]
 
   # The server is the only long-running role, so it is opt-in:

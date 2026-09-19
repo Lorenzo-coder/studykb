@@ -47,6 +47,7 @@ def extract(path: Path) -> list[Unit]:
                 # tools like iLovePDF carry every diagram as vector art, and
                 # missing that means the page is never sent for captioning.
                 has_images=bool(page.get("images")) or graphics.get(page_no, 0) > 0,
+                graphics=graphics.get(page_no, 0),
                 page_no=page_no,
             )
         )

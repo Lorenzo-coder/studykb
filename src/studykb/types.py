@@ -32,6 +32,9 @@ class Unit:
     # Vision/OCR triggers need these; they are not indexed.
     char_count: int = 0
     has_images: bool = False
+    # Vector ops + bitmaps on the page. A cover has ~1, a blank page 0, a real
+    # figure page dozens. The bool alone cannot tell those apart.
+    graphics: int = 0
     page_no: int | None = None
     extra: dict = field(default_factory=dict)
 

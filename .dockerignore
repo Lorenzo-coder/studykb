@@ -1,0 +1,14 @@
+# Local dev overrides must never leak into the image: they point at host paths
+# that do not exist in the container and silently override its defaults.
+config/local.yaml
+.env
+
+.git
+.venv
+.cache
+.pytest_cache
+__pycache__
+*.egg-info
+tests
+corpora/*/sources
+vault

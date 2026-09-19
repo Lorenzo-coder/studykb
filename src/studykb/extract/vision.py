@@ -21,15 +21,16 @@ from ..types import Unit
 
 
 def should_caption(unit: Unit, cfg: Config, mode: str) -> bool:
-    if not cfg.extract.vision.enabled or mode == "never":
+    v = cfg.extract.vision
+    if not v.enabled or mode == "never" or unit.page_no is None:
         return False
-    if mode == "force":
-        return unit.page_no is not None
-    return (
-        unit.page_no is not None
-        and unit.has_images
-        and unit.char_count < cfg.extract.vision.trigger_chars_per_page
-    )
+    # The graphics floor applies even to `force`. Handed a cover or a blank
+    # page, the model does not answer "nothing here" — it pattern-completes
+    # from the title and describes a circuit that does not exist. Not sending
+    # the page is the only reliable defence.
+    if unit.graphics < v.min_graphics:
+        return False
+    return mode == "force" or unit.char_count < v.trigger_chars_per_page
 
 
 def render_page(pdf: Path, page_no: int, cfg: Config, out_dir: Path) -> Path:

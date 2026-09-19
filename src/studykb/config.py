@@ -68,6 +68,7 @@ class OcrCfg(BaseModel):
 class VisionCfg(BaseModel):
     enabled: bool = True
     trigger_chars_per_page: int = 250
+    min_graphics: int = 12
     render_dpi: int = 150
     timeout_s: int = 180
 
@@ -120,7 +121,7 @@ class Config(BaseModel):
             # not. Bump these when the extraction or OCR *logic* changes, or the
             # next run will happily keep last week's wrong output.
             "ocr": _hash_obj({"cfg": self.extract.ocr, "code": "v2"}),
-            "extract": "v2",
+            "extract": "v3",
             "asr_cleanup": _hash_obj(
                 {
                     "on": self.transcript.asr_cleanup,
