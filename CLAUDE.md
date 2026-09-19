@@ -58,9 +58,10 @@ pages. Cite the PDF page; it is the one that opens the right screen.
 
 ## Understanding the code
 
-`docs/README.md` is the map. Read `docs/glossary.md` first — eight terms carry
-the whole design. `docs/DELIVERY.md` says what is built, what is missing, and
-the command that validates each capability.
+`docs/STATE.md` says where the project stands right now — read it when picking
+the work back up. `docs/README.md` is the map, `docs/glossary.md` holds the
+eight terms that carry the design, and `docs/DELIVERY.md` says what is built,
+what is missing, and the command that validates each capability.
 
 ## Agent playbooks
 

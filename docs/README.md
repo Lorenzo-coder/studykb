@@ -14,6 +14,7 @@ Start here.
 
 | document | answers |
 |---|---|
+| [STATE.md](STATE.md) | **where this is right now** — pending work, what is blocked, decisions taken. Read first when resuming |
 | [DELIVERY.md](DELIVERY.md) | every macro-capability the finished application needs, what exists, what is missing, and the command that validates each one |
 
 ## To operate it
