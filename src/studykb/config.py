@@ -173,6 +173,9 @@ class Corpus(BaseModel):
     title: str = ""
     language: str = "en"
     root: Path
+    # Overrides storage.collection. A test corpus must be indexed somewhere the
+    # real one cannot be damaged by it.
+    collection: str | None = None
     calendar: CalendarCfg | None = None
     sources: list[SourceRule]
     # Globs skipped whatever the source rules say. Admin paperwork lives in the

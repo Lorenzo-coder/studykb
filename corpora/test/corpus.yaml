@@ -1,0 +1,42 @@
+# Test corpus: a small, hand-picked set used to check the pipeline before the
+# real material is indexed.
+#
+# It writes to its own Qdrant collection, so nothing here can damage the
+# qml-master index.
+
+domain: "test"
+title: "studykb review set"
+language: "en"
+root: "/home/locode/Personale/QML/test-corpus"
+collection: "studykb_test"
+
+sources:
+  - glob: "transcripts/**/*.vtt"
+    type: transcript
+  - glob: "transcripts/**/*.srt"
+    type: transcript
+  - glob: "slides/**/*.pdf"
+    type: slides
+    vision: force
+  - glob: "slides/**/*.pptx"
+    type: slides
+  - glob: "books/**/*.pdf"
+    type: book
+    vision: never
+  - glob: "papers/**/*.pdf"
+    type: paper
+    vision: never
+
+# No calendar here: module assignment on the test set is done by hand in
+# MANIFEST.md, so a parsing problem in the timetable cannot be mistaken for a
+# problem in extraction.
+module_rules:
+  - match: "manifest"
+
+glossary:
+  - "qubit"
+  - "entanglement"
+  - "variational quantum circuit"
+  - "quantum annealing"
+  - "QUBO"
+  - "Hamiltonian"

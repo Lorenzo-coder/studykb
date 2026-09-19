@@ -210,3 +210,22 @@ def test_clearing_a_stage_leaves_the_others_alone(tmp_path):
         assert st.clear_stage("embed") == 1
         assert st.needs("a.pdf", "embed", "sha", "fp")
         assert not st.needs("a.pdf", "vision", "sha", "fp")
+
+
+def test_embed_gate_moves_when_an_upstream_stage_does(cfg):
+    """Re-captioning a deck must re-index it. Gating embed on its own config
+    alone left ten new captions sitting in a file embed never read again, while
+    the run reported success and the index kept yesterday's content."""
+    from studykb.pipeline import Source, _effective_fp
+
+    slides = Source(path=Path("slides/deck.pdf"), rel="slides/deck.pdf", type="slides", vision="force")
+    book = Source(path=Path("books/b.pdf"), rel="books/b.pdf", type="book", vision="never")
+
+    before = cfg.fingerprint("p1")
+    after = cfg.fingerprint("p2")   # a prompt edit: changes vision, not embed
+
+    assert before["embed"] == after["embed"], "precondition: embed's own fingerprint is unchanged"
+    assert _effective_fp(before, "embed", slides, cfg) != _effective_fp(after, "embed", slides, cfg)
+    # A book is never captioned, so a caption-prompt edit must not cost it a
+    # reindex it cannot benefit from.
+    assert _effective_fp(before, "embed", book, cfg) == _effective_fp(after, "embed", book, cfg)

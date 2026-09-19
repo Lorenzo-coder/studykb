@@ -26,6 +26,17 @@ console = Console()
 STAGES = ("ocr", "extract", "asr_cleanup", "vision", "embed")
 
 
+def _load(corpus: str, config: Path | None, root: Path | None = None):
+    """Load config + corpus, applying the corpus-level overrides."""
+    cfg = load_config(config)
+    corp = load_corpus(corpus)
+    if root:
+        corp.root = root
+    if corp.collection:
+        cfg.storage.collection = corp.collection
+    return cfg, corp
+
+
 @app.command()
 def doctor(config: Path = typer.Option(None, "--config")) -> None:
     """Check everything ingest depends on, before a long run discovers it."""
@@ -91,10 +102,7 @@ def ingest(
     root: Path = typer.Option(None, "--root", help="Override corpus.root (the manifest says /corpus, which only exists in the container)"),
 ) -> None:
     """Ingest a corpus. Incremental: unchanged sources cost nothing."""
-    cfg = load_config(config)
-    corp = load_corpus(corpus)
-    if root:
-        corp.root = root
+    cfg, corp = _load(corpus, config, root)
     if bad := set(only or []) - set(STAGES):
         raise typer.BadParameter(f"unknown stage(s): {', '.join(sorted(bad))}")
 
@@ -137,8 +145,7 @@ def forget(
     config: Path = typer.Option(None, "--config"),
 ) -> None:
     """Drop a source's chunks and its ingest state."""
-    cfg = load_config(config)
-    load_corpus(corpus)
+    cfg, _ = _load(corpus, config)
     client = index.connect(cfg)
     index.drop_source(client, cfg, source)
     from .state import State
@@ -154,13 +161,48 @@ def search(
     module: str = typer.Option(None, "--module", "-m"),
     type_: str = typer.Option(None, "--type", "-t"),
     k: int = typer.Option(None, "-k"),
+    corpus: str = typer.Option(None, "--corpus", help="Needed only when the corpus has its own collection"),
     config: Path = typer.Option(None, "--config"),
 ) -> None:
     """Query the index from the shell."""
-    cfg = load_config(config)
+    cfg = _load(corpus, config)[0] if corpus else load_config(config)
     with LLM(cfg) as llm:
         hits = search_mod.search(index.connect(cfg), cfg, llm, query, module=module, type_=type_, k=k)
     console.print(search_mod.format_hits(hits))
+
+
+@app.command()
+def review(
+    corpus: str = typer.Option(..., "--corpus"),
+    what: list[str] = typer.Option(None, "--what", help="extraction, captions, retrieval; default all"),
+    config: Path = typer.Option(None, "--config"),
+    root: Path = typer.Option(None, "--root"),
+    out: Path = typer.Option(None, "--out", help="Where to write the reports (default: <corpus root>/review)"),
+) -> None:
+    """Write reports for a human to check before the index is trusted."""
+    from . import review as review_mod
+
+    cfg, corp = _load(corpus, config, root)
+    paths = review_mod.ReviewPaths(out or corp.root / "review")
+    wanted = set(what) if what else {"extraction", "captions", "retrieval"}
+
+    table = Table(title=f"corpus: {corp.domain}")
+    for col, just in (("source", "left"), ("type", "left"), ("module", "left"), ("chunks", "right")):
+        table.add_column(col, justify=just)
+    for rel, type_, module, n in review_mod.inventory(cfg, corp):
+        table.add_row(rel[:60], type_, module or "—", str(n) if n else "[red]0[/]")
+    console.print(table)
+
+    if "extraction" in wanted:
+        console.print(f"[green]✓[/] {review_mod.extraction_report(cfg, corp, paths)}")
+    if "captions" in wanted:
+        console.print(f"[green]✓[/] {review_mod.caption_report(cfg, corp, paths)}")
+    if "retrieval" in wanted:
+        queries = corp.manifest_dir / "queries.yaml"
+        if queries.exists():
+            console.print(f"[green]✓[/] {review_mod.retrieval_report(cfg, corp, paths, queries)}")
+        else:
+            console.print(f"[yellow]![/] no {queries} — skipping retrieval review")
 
 
 @app.command()
@@ -173,7 +215,7 @@ def serve(
     """Run the MCP + HTTP server."""
     from .server import run
 
-    run(load_config(config), load_corpus(corpus), host=host, port=port)
+    run(*_load(corpus, config), host=host, port=port)
 
 
 if __name__ == "__main__":

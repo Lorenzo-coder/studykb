@@ -1,0 +1,32 @@
+# Queries for the retrieval review. Each becomes a section in
+# review/retrieval.md with its results and their locators.
+#
+# `expect` is a substring of the source you think should come back. It prompts
+# you to look; it is not pass/fail — retrieval that finds a better source than
+# you guessed is not a failure.
+
+- query: "what is a variational quantum circuit"
+  k: 5
+  expect: "Schuld"
+
+- query: "Pauli X gate matrix and its action on basis states"
+  k: 5
+
+- query: "QUBO formulation with binary slack variables"
+  k: 5
+  expect: "QKnapsack"
+
+- query: "Bell inequality and local realism"
+  module: M3
+  k: 5
+
+- query: "denoising diffusion probabilistic model"
+  k: 5
+  expect: "Parigi"
+
+- query: "portfolio optimisation with cardinality constraints"
+  k: 5
+
+- query: "tensor product of two Hilbert spaces"
+  type: caption
+  k: 5

@@ -172,7 +172,10 @@ def ingest(
             for src in sources:
                 src.sha = file_sha(src.path)
                 for stage in ("ocr", "extract", "asr_cleanup", "vision", "embed"):
-                    if not (_stage_applies(stage, src, cfg) and st.needs(src.rel, stage, src.sha, fp[stage])):
+                    if not (
+                        _stage_applies(stage, src, cfg)
+                        and st.needs(src.rel, stage, src.sha, _effective_fp(fp, stage, src, cfg))
+                    ):
                         continue
                     # The OCR stage checks every PDF but rewrites almost none;
                     # reporting the checks would badly overstate the work.
@@ -205,6 +208,27 @@ def ingest(
 
 def _wanted(stage: str, only: set[str] | None) -> bool:
     return only is None or stage in only
+
+
+# A stage consumes the output of the stages above it, so its gate has to move
+# when theirs does. Without this, re-captioning a deck leaves the new captions
+# sitting in a file that embed never reads again, and the index quietly keeps
+# yesterday's content while every run reports success.
+_UPSTREAM: dict[str, tuple[str, ...]] = {
+    "extract": ("ocr",),
+    "asr_cleanup": ("extract",),
+    "vision": ("extract",),
+    "embed": ("extract", "asr_cleanup", "vision"),
+}
+
+
+def _effective_fp(fp: dict[str, str], stage: str, src: Source, cfg: Config) -> str:
+    """Fingerprint of a stage plus every upstream stage that feeds this source."""
+    parts = [fp[stage]]
+    for up in _UPSTREAM.get(stage, ()):
+        if _stage_applies(up, src, cfg):
+            parts.append(fp[up])
+    return "|".join(parts)
 
 
 def _stage_applies(stage: str, src: Source, cfg: Config) -> bool:
@@ -240,7 +264,7 @@ def _stage_ocr(cfg, sources, st, fp, work, report, log) -> None:
             if (path := Path(ref)).exists():
                 src.ocr_path = path
 
-    todo = [s for s in sources if _stage_applies("ocr", s, cfg) and st.needs(s.rel, "ocr", s.sha, fp["ocr"])]
+    todo = [s for s in sources if _stage_applies("ocr", s, cfg) and st.needs(s.rel, "ocr", s.sha, _effective_fp(fp, "ocr", s, cfg))]
     if not todo:
         return
     log(f"[ocr] checking {len(todo)} PDFs for a missing text layer")
@@ -257,12 +281,12 @@ def _stage_ocr(cfg, sources, st, fp, work, report, log) -> None:
         except Exception as exc:  # noqa: BLE001
             report.errors.append(f"ocr {src.rel}: {exc}")
             continue
-        st.mark(src.rel, "ocr", src.sha, fp["ocr"], out_ref)
+        st.mark(src.rel, "ocr", src.sha, _effective_fp(fp, "ocr", src, cfg), out_ref)
 
 
 # -- stage 2: extract ------------------------------------------------------
 def _stage_extract(cfg, sources, st, fp, work, report, log) -> None:
-    todo = [s for s in sources if st.needs(s.rel, "extract", s.sha, fp["extract"])]
+    todo = [s for s in sources if st.needs(s.rel, "extract", s.sha, _effective_fp(fp, "extract", s, cfg))]
     if not todo:
         return
     log(f"[extract] {len(todo)} sources")
@@ -275,7 +299,7 @@ def _stage_extract(cfg, sources, st, fp, work, report, log) -> None:
         out = _units_file(work, src, "units")
         _save_units(out, units)
         _write_extracted_markdown(cfg, src, units)
-        st.mark(src.rel, "extract", src.sha, fp["extract"], str(out))
+        st.mark(src.rel, "extract", src.sha, _effective_fp(fp, "extract", src, cfg), str(out))
         report.bump("extract")
 
 
@@ -298,7 +322,7 @@ def _write_extracted_markdown(cfg: Config, src: Source, units: list[Unit]) -> No
 def _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, prompts, report, log) -> None:
     todo = [
         s for s in sources
-        if _stage_applies("asr_cleanup", s, cfg) and st.needs(s.rel, "asr_cleanup", s.sha, fp["asr_cleanup"])
+        if _stage_applies("asr_cleanup", s, cfg) and st.needs(s.rel, "asr_cleanup", s.sha, _effective_fp(fp, "asr_cleanup", s, cfg))
     ]
     if not todo:
         return
@@ -315,7 +339,7 @@ def _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, prompts, report
         fixed = extract.asr.correct(units, glossary, llm, tpl, lecture)
         out = _units_file(work, src, "asr")
         _save_units(out, fixed)
-        st.mark(src.rel, "asr_cleanup", src.sha, fp["asr_cleanup"], str(out))
+        st.mark(src.rel, "asr_cleanup", src.sha, _effective_fp(fp, "asr_cleanup", src, cfg), str(out))
         report.bump("asr_cleanup", len(fixed))
     llm.unload(cfg.models.llm.name)
 
@@ -324,7 +348,7 @@ def _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, prompts, report
 def _stage_vision(cfg, sources, st, fp, work, llm, prompts, report, log) -> None:
     todo = [
         s for s in sources
-        if _stage_applies("vision", s, cfg) and st.needs(s.rel, "vision", s.sha, fp["vision"])
+        if _stage_applies("vision", s, cfg) and st.needs(s.rel, "vision", s.sha, _effective_fp(fp, "vision", s, cfg))
     ]
     if not todo:
         return
@@ -342,7 +366,7 @@ def _stage_vision(cfg, sources, st, fp, work, llm, prompts, report, log) -> None
             continue
         out = _units_file(work, src, "captions")
         _save_units(out, captions)
-        st.mark(src.rel, "vision", src.sha, fp["vision"], str(out))
+        st.mark(src.rel, "vision", src.sha, _effective_fp(fp, "vision", src, cfg), str(out))
         report.bump("vision", len(captions))
     llm.unload(cfg.models.vlm.name)
     if cfg.models.vlm.fallback:
@@ -363,7 +387,7 @@ def _stage_embed(cfg, sources, st, fp, work, llm, report, log) -> None:
         if cleared:
             log(f"[embed] collection is empty but {cleared} sources were marked indexed — reindexing all")
 
-    todo = [s for s in sources if st.needs(s.rel, "embed", s.sha, fp["embed"])]
+    todo = [s for s in sources if st.needs(s.rel, "embed", s.sha, _effective_fp(fp, "embed", s, cfg))]
     if not todo:
         return
     log(f"[embed] indexing {len(todo)} sources with {cfg.models.embed.name}")
@@ -385,7 +409,7 @@ def _stage_embed(cfg, sources, st, fp, work, llm, report, log) -> None:
         # the previous run's chunks orphaned in the collection.
         index.drop_source(client, cfg, src.rel)
         index.upsert(client, cfg, chunks, vectors)
-        st.mark(src.rel, "embed", src.sha, fp["embed"], str(len(chunks)))
+        st.mark(src.rel, "embed", src.sha, _effective_fp(fp, "embed", src, cfg), str(len(chunks)))
         report.bump("embed")
         report.chunks += len(chunks)
 

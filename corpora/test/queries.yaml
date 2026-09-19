@@ -1,0 +1,22 @@
+# Queries for the retrieval review. Each one becomes a section in
+# review/retrieval.md with its results and their locators.
+#
+# `expect` is a substring of the source you think should come back. It prompts
+# you to look; it is not a pass/fail, because retrieval that finds a better
+# source than you guessed is not a failure.
+#
+# Write queries the way you would actually ask them while studying.
+
+- query: "what is a variational quantum circuit"
+  k: 5
+
+- query: "QUBO formulation with binary slack variables"
+  k: 5
+
+- query: "Pauli X gate matrix"
+  type: caption
+  k: 5
+
+# - query: "..."
+#   module: M8
+#   expect: "Corazza"

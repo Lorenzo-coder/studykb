@@ -60,6 +60,11 @@ sources:
 # Enrolment forms, invoices and bookings sit in the same folders as the study
 # material. They are not study material and they poison retrieval.
 exclude:
+  # The review set and the generated reports live under the same root and must
+  # not be indexed as if they were course material.
+  - "test-corpus/**"
+  - "review/**"
+  - "vault/**"
   - "admin/**"
   - "Bando *.pdf"
   - "Allegato Bando*.pdf"
