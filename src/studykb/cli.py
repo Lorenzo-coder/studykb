@@ -39,6 +39,8 @@ def _load(corpus: str, config: Path | None, root: Path | None = None):
         corp.root = root
     if corp.collection:
         cfg.storage.collection = corp.collection
+    if corp.vault:
+        cfg.storage.vault = corp.vault
     # One state file per corpus. Sharing it makes two corpora lie to each other:
     # every source of corpus A looks "missing from disk" while ingesting B, and
     # B's empty collection makes the reconciliation guard wipe A's embed state.
@@ -185,7 +187,7 @@ def search(
 @app.command()
 def review(
     corpus: str = typer.Option(..., "--corpus"),
-    what: list[str] = typer.Option(None, "--what", help="summary, extraction, captions, retrieval; default all"),
+    what: list[str] = typer.Option(None, "--what", help="summary, extraction, chunks, captions, retrieval; default all"),
     config: Path = typer.Option(None, "--config"),
     root: Path = typer.Option(None, "--root"),
     out: Path = typer.Option(None, "--out", help="Where to write the reports (default: <corpus root>/review)"),
@@ -195,7 +197,7 @@ def review(
 
     cfg, corp = _load(corpus, config, root)
     paths = review_mod.ReviewPaths(out or corp.root / "review")
-    wanted = set(what) if what else {"summary", "extraction", "captions", "retrieval"}
+    wanted = set(what) if what else {"summary", "extraction", "chunks", "captions", "retrieval"}
 
     if "summary" in wanted:
         rows, checks = review_mod.summary(cfg, corp)
@@ -214,6 +216,8 @@ def review(
 
     if "extraction" in wanted:
         console.print(f"[green]✓[/] {review_mod.extraction_report(cfg, corp, paths)}")
+    if "chunks" in wanted:
+        console.print(f"[green]✓[/] {review_mod.chunks_report(cfg, corp, paths)}")
     if "captions" in wanted:
         console.print(f"[green]✓[/] {review_mod.caption_report(cfg, corp, paths)}")
     if "retrieval" in wanted:

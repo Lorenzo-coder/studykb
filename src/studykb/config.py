@@ -175,9 +175,11 @@ class Corpus(BaseModel):
     title: str = ""
     language: str = "en"
     root: Path
-    # Overrides storage.collection. A test corpus must be indexed somewhere the
-    # real one cannot be damaged by it.
+    # Override storage.collection and storage.vault. A test corpus must write
+    # its index and its extractions somewhere the real ones cannot be damaged
+    # by it — a review run must never leave files in the study vault.
     collection: str | None = None
+    vault: Path | None = None
     calendar: CalendarCfg | None = None
     sources: list[SourceRule]
     # Globs skipped whatever the source rules say. Admin paperwork lives in the

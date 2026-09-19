@@ -9,6 +9,8 @@ title: "studykb review set"
 language: "en"
 root: "/home/locode/Personale/QML/test-corpus"
 collection: "studykb_test"
+# Extractions and syllabus land here, not in the study vault.
+vault: "/home/locode/Personale/QML/test-corpus/vault"
 
 sources:
   - glob: "transcripts/**/*.vtt"

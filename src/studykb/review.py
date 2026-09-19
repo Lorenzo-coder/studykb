@@ -22,10 +22,16 @@ from pathlib import Path
 import yaml
 
 from . import index, search as search_mod
+from .chunk import CHARS_PER_TOKEN
 from .config import Config, Corpus
 from .llm import LLM
 from .pipeline import Source, _chunks_for, _load_calendar, _units_file, discover
 from .state import State, file_sha
+
+
+# Below this a chunk is a title page or a part divider: it will never be a
+# useful hit, but it still occupies a vector.
+TINY_CHUNK = 200
 
 
 @dataclass
@@ -106,6 +112,7 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
     lost_pages: list[str] = []
     trivial_captions = 0
     captions_total = 0
+    tiny_chunks = 0
 
     for src in sources:
         units = _load_units(_units_file(work, src, "units"))
@@ -115,6 +122,7 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
 
         produced = list(_chunks_for(cfg, src, work))
         produced_total += len(produced)
+        tiny_chunks += sum(1 for c in produced if len(c.text) < TINY_CHUNK)
         try:
             indexed = client.count(
                 cfg.storage.collection,
@@ -155,6 +163,10 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
         Check(not lost_pages, "no page with text was dropped",
               "every page carrying text produced a chunk" if not lost_pages
               else "; ".join(lost_pages[:3])),
+        Check(tiny_chunks <= max(produced_total * 0.1, 5), "chunks are worth indexing",
+              f"{tiny_chunks} of {produced_total} chunks are under {TINY_CHUNK} characters"
+              + ("" if tiny_chunks <= max(produced_total * 0.1, 5)
+                 else " — mostly title pages and dividers, they dilute retrieval")),
         Check(trivial_captions <= captions_total * 0.4, "captions carry content",
               f"{captions_total} captions, {trivial_captions} trivial (\"Cover page.\", \"Blank page.\")"
               + ("" if trivial_captions <= captions_total * 0.4
@@ -192,6 +204,7 @@ def summary_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
         "| question | file |",
         "|---|---|",
         "| did a page lose its text? | `extraction.md` |",
+        "| where does one chunk end and the next begin? | `chunks.md` |",
         "| is a caption describing something that is not there? | `captions.md` |",
         "| does search return the right passage? | `retrieval.md` |",
         "",
@@ -310,6 +323,73 @@ def _why_no_captions(src: Source, cfg: Config, work: Path) -> str:
         return "not captioned yet — run `studykb ingest --only vision`"
     return (f"no page reached the graphics floor of {cfg.extract.vision.min_graphics} "
             f"(`extract.vision.min_graphics`) — nothing to describe")
+
+
+# --------------------------------------------------------------------------
+# 2b. Chunks — the unit retrieval actually returns
+# --------------------------------------------------------------------------
+def chunks_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
+    """Show the seams, not the text.
+
+    A page is not what search returns — a chunk is, and a chunk can begin and
+    end anywhere. The text itself is already in extraction.md, so this shows
+    each chunk's opening and closing words: read down the pairs and a cut
+    landing mid-derivation is obvious, while a full dump of 488 chunks is not.
+    """
+    work = cfg.storage.state_db.parent / "work"
+    lines = [
+        "# Chunk review",
+        "",
+        "What search actually returns. Each row is one indexed chunk, with the",
+        "words it opens and closes on — a cut landing mid-sentence or mid-formula",
+        "shows up in the pair, without reading the whole text.",
+        "",
+        "`chunk.target_tokens` is a **ceiling**, not a target: a page shorter than",
+        "it is kept whole, so on ordinary pages one chunk is one page and every",
+        "locator is exact. Transcripts and captions are never split.",
+        "",
+    ]
+
+    for src in _sources(cfg, corpus):
+        chunks = list(_chunks_for(cfg, src, work))
+        if not chunks:
+            continue
+        sizes = sorted(len(c.text) for c in chunks)
+        pages = len({c.locator for c in chunks})
+        ceiling = cfg.chunk.target_tokens * CHARS_PER_TOKEN
+        under = sum(1 for n in sizes if n < ceiling)
+        tiny = [c for c in chunks if len(c.text) < TINY_CHUNK]
+        lines += [
+            f"## {src.rel}",
+            "",
+            f"- {len(chunks)} chunks over {pages} locators · median {sizes[len(sizes) // 2]:,} chars "
+            f"({sizes[0]:,} smallest, {sizes[-1]:,} largest)",
+            f"- {under}/{len(sizes)} are below the {ceiling:,}-character ceiling, so the splitter "
+            f"mostly does not fire: **one page, one chunk**, and every locator is exact",
+        ]
+        if tiny:
+            lines.append(
+                f"- {len(tiny)} chunks under {TINY_CHUNK} characters — title pages and part "
+                f"dividers ({', '.join(c.locator for c in tiny[:8])}). Index noise, not content."
+            )
+        lines += [
+            "",
+            "| # | locator | type | prov | chars | opens with … closes with |",
+            "|---:|---|---|---|---:|---|",
+        ]
+        for i, c in enumerate(chunks, 1):
+            text = " ".join(c.text.split())
+            opens = text[:110].replace("|", "\\|")
+            closes = text[-70:].replace("|", "\\|") if len(text) > 180 else ""
+            seam = f"{opens} **…** {closes}" if closes else opens
+            lines.append(
+                f"| {i} | `{c.locator}` | {c.type} | {c.provenance} | {len(c.text):,} | {seam} |"
+            )
+        lines.append("")
+
+    path = out.file("chunks.md")
+    path.write_text("\n".join(lines))
+    return path
 
 
 # --------------------------------------------------------------------------
