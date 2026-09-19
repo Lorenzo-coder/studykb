@@ -1,5 +1,11 @@
 # Architecture
 
+High-level: what the application is and how data moves through it. For the
+terms used here, read [docs/glossary.md](docs/glossary.md) first; for how a
+subsystem actually works, follow the links in
+[docs/README.md](docs/README.md). For what is built and what is missing, see
+[docs/DELIVERY.md](docs/DELIVERY.md).
+
 ## Two forces shaped everything
 
 **The corpus grows.** Material arrives in waves, so a full reprocess is never
@@ -31,6 +37,13 @@ corpus.yaml globs
 `Unit` is one page, one slide or one five-minute transcript window. `Chunk` is
 what gets embedded. Both carry `locator` and `provenance` — see the README for
 why that is the load-bearing part.
+
+Per stage: [discovery](docs/internals/discovery.md) ·
+[extraction and OCR](docs/internals/extraction.md) ·
+[vision and ASR](docs/internals/enrichment.md) ·
+[chunking](docs/internals/chunking.md) ·
+[indexing and retrieval](docs/internals/indexing-retrieval.md) ·
+[what makes a stage rerun](docs/internals/state.md)
 
 ## Decisions
 

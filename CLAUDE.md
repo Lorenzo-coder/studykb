@@ -56,6 +56,12 @@ Every passage carries a `provenance`:
 printed on the paper. In a book with front matter the two differ by a dozen
 pages. Cite the PDF page; it is the one that opens the right screen.
 
+## Understanding the code
+
+`docs/README.md` is the map. Read `docs/glossary.md` first — eight terms carry
+the whole design. `docs/DELIVERY.md` says what is built, what is missing, and
+the command that validates each capability.
+
 ## Agent playbooks
 
 `docs/agents/` — pick by task: `ingest-runbook.md` (operating a run),
