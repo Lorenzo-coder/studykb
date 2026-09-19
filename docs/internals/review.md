@@ -4,6 +4,9 @@
 
 Reports for a human to check **before the index is trusted**.
 
+They are written to `<vault>/95-review/`, so Obsidian opens them with the page
+images rendered in place.
+
 Three things go wrong in this pipeline and none of them raise an error:
 extraction drops a page, a caption describes a figure that is not there, and
 retrieval returns something plausible from the wrong source. A run that reports
@@ -47,7 +50,7 @@ SUMMARY points at a source.
 
 ## Design decisions worth knowing
 
-**`captions.md` renders the pages itself**, into `review/pages/`, rather than
+**`captions.md` renders the pages itself**, into `95-review/pages/` inside the vault, rather than
 relying on the ingest run having kept them. Rendering is seconds of CPU and it
 works on captions generated at any time. Filenames are slugged to `p0023.png`
 because source titles contain spaces and braces that break image links

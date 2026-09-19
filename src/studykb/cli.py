@@ -190,13 +190,15 @@ def review(
     what: list[str] = typer.Option(None, "--what", help="summary, extraction, chunks, captions, retrieval; default all"),
     config: Path = typer.Option(None, "--config"),
     root: Path = typer.Option(None, "--root"),
-    out: Path = typer.Option(None, "--out", help="Where to write the reports (default: <corpus root>/review)"),
+    out: Path = typer.Option(None, "--out", help="Where to write the reports (default: <vault>/95-review)"),
 ) -> None:
     """Write reports for a human to check before the index is trusted."""
     from . import review as review_mod
 
     cfg, corp = _load(corpus, config, root)
-    paths = review_mod.ReviewPaths(out or corp.root / "review")
+    # Inside the vault, so Obsidian renders them — captions.md is only useful
+    # when the page images next to it actually display.
+    paths = review_mod.ReviewPaths(out or cfg.storage.vault / "95-review")
     wanted = set(what) if what else {"summary", "extraction", "chunks", "captions", "retrieval"}
 
     if "summary" in wanted:
