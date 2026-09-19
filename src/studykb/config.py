@@ -132,7 +132,9 @@ class Config(BaseModel):
             ),
             "vision": _hash_obj({"cfg": self.extract.vision, "m": m.vlm.name, "p": prompt_version}),
             "chunk": _hash_obj(self.chunk),
-            "embed": _hash_obj({"m": m.embed.name, "d": m.embed.dim, "chunk": _hash_obj(self.chunk)}),
+            "embed": _hash_obj(
+                {"m": m.embed.name, "d": m.embed.dim, "chunk": _hash_obj(self.chunk), "code": "v2"}
+            ),
         }
 
 

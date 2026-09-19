@@ -72,7 +72,7 @@ def to_chunks(
                 continue
             chunks.append(
                 Chunk(
-                    id=chunk_id(source, unit.locator, i),
+                    id=chunk_id(source, unit.locator, i, str(type_)),
                     text=part,
                     source=source,
                     source_title=source_title,

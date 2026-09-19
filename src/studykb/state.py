@@ -54,9 +54,15 @@ def file_sha(path: Path, _bufsize: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
-def chunk_id(source: str, locator: str, index: int) -> str:
-    """Stable UUID for a chunk. Same inputs always yield the same point id."""
-    return str(uuid.uuid5(_CHUNK_NS, f"{source}|{locator}|{index}"))
+def chunk_id(source: str, locator: str, index: int, kind: str) -> str:
+    """Stable UUID for a chunk. Same inputs always yield the same point id.
+
+    ``kind`` is part of the key, and has to be: a page's caption and the page's
+    own text share a source, a locator and an index, so without it the caption
+    silently overwrote the text it was meant to complement — ten slides kept the
+    model's description and lost what was actually printed on them.
+    """
+    return str(uuid.uuid5(_CHUNK_NS, f"{source}|{locator}|{index}|{kind}"))
 
 
 class State:

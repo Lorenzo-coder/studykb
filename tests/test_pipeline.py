@@ -78,9 +78,10 @@ def test_long_page_splits_but_every_piece_keeps_the_locator():
 
 # -- 3. incrementality -----------------------------------------------------
 def test_chunk_ids_are_stable_across_runs():
-    assert chunk_id("a.pdf", "p.1", 0) == chunk_id("a.pdf", "p.1", 0)
-    assert chunk_id("a.pdf", "p.1", 0) != chunk_id("a.pdf", "p.1", 1)
-    assert chunk_id("a.pdf", "p.1", 0) != chunk_id("b.pdf", "p.1", 0)
+    assert chunk_id("a.pdf", "p.1", 0, "book") == chunk_id("a.pdf", "p.1", 0, "book")
+    assert chunk_id("a.pdf", "p.1", 0, "book") != chunk_id("a.pdf", "p.1", 1, "book")
+    assert chunk_id("a.pdf", "p.1", 0, "book") != chunk_id("b.pdf", "p.1", 0, "book")
+    assert chunk_id("a.pdf", "p.1", 0, "book") != chunk_id("a.pdf", "p.1", 0, "caption")
 
 
 def test_stage_reruns_only_when_its_own_inputs_change(tmp_path):
@@ -257,3 +258,18 @@ def test_exclude_patterns_actually_exclude_subtrees():
     assert _excluded("Bando Unico 25-26.pdf", patterns)
     assert not _excluded("Book/nielsen.pdf", patterns)
     assert not _excluded("slides/deck.pdf", patterns)
+
+
+def test_a_caption_does_not_overwrite_the_page_it_describes(cfg):
+    """Captions and body text share a source, a locator and an index. Leaving
+    the type out of the chunk id made the caption upsert replace the page's own
+    text: ten slides kept the model's description and lost what was printed."""
+    from studykb.types import Unit
+
+    page = Unit(locator="p.23", text="Pauli Gates. X or NOT.")
+    caption = Unit(locator="p.23", text="A matrix and three circuit lines.", provenance="local-vlm")
+
+    body = to_chunks([page], source="d.pdf", source_title="d", type_="slides", module="M4", cfg=cfg.chunk)
+    caps = to_chunks([caption], source="d.pdf", source_title="d", type_="caption", module="M4", cfg=cfg.chunk)
+
+    assert body[0].id != caps[0].id

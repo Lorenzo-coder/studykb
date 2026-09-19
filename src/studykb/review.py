@@ -135,10 +135,11 @@ def caption_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
         "",
     ]
     total = 0
+    skipped: list[str] = []
     for src in _sources(cfg, corpus):
-        captions = _load_units(_units_file(work, src, "captions"))
-        captions = [c for c in captions if c["text"].strip()]
+        captions = [c for c in _load_units(_units_file(work, src, "captions")) if c["text"].strip()]
         if not captions:
+            skipped.append(f"- `{src.rel}` — {_why_no_captions(src, cfg, work)}")
             continue
         lines += [f"## {src.rel}", "", f"{len(captions)} captions · module `{src.module or '—'}`", ""]
         pages_dir = out.root / "pages" / _slug(src.rel)
@@ -154,11 +155,31 @@ def caption_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
             ]
             lines += [cap["text"], "", "---", ""]
 
+    if skipped:
+        # Omitting these silently reads as "the source was not processed".
+        # Usually it means captioning was never meant to run on it.
+        lines += ["## Sources with no captions", "", *skipped, ""]
+
     lines.insert(1, "")
     lines.insert(1, f"**{total} captions to review.**")
     path = out.file("captions.md")
     path.write_text("\n".join(lines))
     return path
+
+
+def _why_no_captions(src: Source, cfg: Config, work: Path) -> str:
+    """Say why, so an absence is never mistaken for a failure."""
+    if not cfg.extract.vision.enabled:
+        return "captioning is switched off globally (`extract.vision.enabled`)"
+    if src.vision == "never":
+        return (f"captioning is off for `{src.type}` sources — on prose the model "
+                f"describes covers and invents figures, so it is not run")
+    if src.path.suffix.lower() != ".pdf":
+        return f"captioning only handles PDFs, this is `{src.path.suffix}`"
+    if not _units_file(work, src, "captions").exists():
+        return "not captioned yet — run `studykb ingest --only vision`"
+    return (f"no page reached the graphics floor of {cfg.extract.vision.min_graphics} "
+            f"(`extract.vision.min_graphics`) — nothing to describe")
 
 
 # --------------------------------------------------------------------------
