@@ -34,6 +34,12 @@ def _load(corpus: str, config: Path | None, root: Path | None = None):
         corp.root = root
     if corp.collection:
         cfg.storage.collection = corp.collection
+    # One state file per corpus. Sharing it makes two corpora lie to each other:
+    # every source of corpus A looks "missing from disk" while ingesting B, and
+    # B's empty collection makes the reconciliation guard wipe A's embed state.
+    cfg.storage.state_db = cfg.storage.state_db.with_name(
+        f"{cfg.storage.state_db.stem}-{corp.domain}{cfg.storage.state_db.suffix}"
+    )
     return cfg, corp
 
 

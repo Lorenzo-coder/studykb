@@ -229,3 +229,31 @@ def test_embed_gate_moves_when_an_upstream_stage_does(cfg):
     # A book is never captioned, so a caption-prompt edit must not cost it a
     # reindex it cannot benefit from.
     assert _effective_fp(before, "embed", book, cfg) == _effective_fp(after, "embed", book, cfg)
+
+
+def test_two_corpora_do_not_share_a_state_file(tmp_path, monkeypatch):
+    """A shared state file makes two corpora lie to each other: every source of
+    corpus A reads as 'missing from disk' while ingesting B, and B's empty
+    collection makes the reconciliation guard wipe A's embed state."""
+    from studykb.cli import _load
+
+    cfg_path = Path(__file__).parents[1] / "config/default.yaml"
+    qml = _load("qml-master", cfg_path)[0].storage
+    test = _load("test", cfg_path)[0].storage
+
+    assert qml.state_db != test.state_db
+    assert qml.collection != test.collection
+
+
+def test_exclude_patterns_actually_exclude_subtrees():
+    """`test-corpus/**` excluded nothing: pathlib's ** expands to directories
+    only, so the review set was being indexed as course material."""
+    from studykb.pipeline import _excluded
+
+    patterns = ["test-corpus/**", "admin/**", "Bando *.pdf"]
+    assert _excluded("test-corpus/books/conti.pdf", patterns)
+    assert _excluded("test-corpus/slides/deck.pdf", patterns)
+    assert _excluded("admin/receipt.pdf", patterns)
+    assert _excluded("Bando Unico 25-26.pdf", patterns)
+    assert not _excluded("Book/nielsen.pdf", patterns)
+    assert not _excluded("slides/deck.pdf", patterns)

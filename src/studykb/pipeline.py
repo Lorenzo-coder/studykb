@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import re
+from fnmatch import fnmatch
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -72,12 +73,6 @@ def discover(corpus: Corpus, modules: list[cal.Module]) -> tuple[list[Source], l
     by_date = {lec.date.isoformat(): lec.module for m in modules for lec in m.lectures if lec.date}
     overrides = _read_manifest(corpus.manifest_dir / "MANIFEST.md")
 
-    excluded = {
-        str(path.relative_to(corpus.root))
-        for pattern in corpus.exclude
-        for path in corpus.root.glob(pattern)
-    }
-
     found: dict[str, Source] = {}
     for rule in corpus.sources:
         if not rule.enabled:
@@ -86,7 +81,7 @@ def discover(corpus: Corpus, modules: list[cal.Module]) -> tuple[list[Source], l
             if not path.is_file() or path.suffix.lower() not in extract.SUPPORTED:
                 continue
             rel = str(path.relative_to(corpus.root))
-            if rel in found or rel in excluded:   # claimed by an earlier rule, or excluded
+            if rel in found or _excluded(rel, corpus.exclude):
                 continue
             override = overrides.get(rel)
             if override and override.get("enabled") is False:
@@ -105,6 +100,17 @@ def discover(corpus: Corpus, modules: list[cal.Module]) -> tuple[list[Source], l
     sources = list(found.values())
     unassigned = [s.rel for s in sources if not s.module]
     return sources, unassigned
+
+
+def _excluded(rel: str, patterns: list[str]) -> bool:
+    """Match an exclude pattern against the path.
+
+    fnmatch rather than Path.glob: pathlib's ``**`` expands to directories only,
+    so ``test-corpus/**`` excluded nothing at all and the review set was being
+    indexed as course material. Here ``*`` crosses separators, so
+    ``test-corpus/**`` and ``admin/**`` cover everything beneath them.
+    """
+    return any(fnmatch(rel, pattern) for pattern in patterns)
 
 
 def _module_for(rel: str, corpus: Corpus, by_date: dict[str, str]) -> str | None:
