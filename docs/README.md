@@ -10,6 +10,12 @@ Start here.
 | [glossary.md](glossary.md) | the eight terms that appear everywhere — **read this first** |
 | [internals/](internals/) | one document per subsystem, following the data with function and file names |
 
+## To use it
+
+| document | answers |
+|---|---|
+| [HOWTO.md](HOWTO.md) | **step by step: start, ingest, check, search.** Start here to operate the system |
+
 ## To build and verify it
 
 | document | answers |

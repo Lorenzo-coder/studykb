@@ -75,6 +75,11 @@ claude mcp add --transport http studykb http://127.0.0.1:8077/mcp
 
 Tools: `kb_search`, `kb_outline`, `kb_lecture`, `kb_sources`.
 
+## Using it
+
+[docs/HOWTO.md](docs/HOWTO.md) is the step-by-step guide: what to run, what you
+should see, and what to do when you see something else.
+
 ## Development
 
 ```bash
