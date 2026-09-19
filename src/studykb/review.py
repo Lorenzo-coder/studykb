@@ -24,7 +24,7 @@ import yaml
 from . import index, search as search_mod
 from .config import Config, Corpus
 from .llm import LLM
-from .pipeline import Source, _load_calendar, _units_file, discover
+from .pipeline import Source, _chunks_for, _load_calendar, _units_file, discover
 from .state import State, file_sha
 
 
@@ -69,6 +69,136 @@ def _render_for_review(src: Source, cap: dict, cfg: Config, out_dir: Path) -> Pa
         return rendered.rename(target)
     except Exception:  # noqa: BLE001 - a page that will not render is not a reason to lose the report
         return None
+
+
+# --------------------------------------------------------------------------
+# 0. Summary — the one screen that says whether anything is wrong
+# --------------------------------------------------------------------------
+@dataclass
+class Check:
+    ok: bool
+    name: str
+    detail: str
+
+    @property
+    def mark(self) -> str:
+        return "✅" if self.ok else "⚠️"
+
+
+def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
+    """Per-source numbers, plus the checks that catch silent damage.
+
+    Every failure this pipeline has actually produced was invisible in a run
+    that reported success: a deck indexed as nothing, a caption overwriting the
+    page it described, a source discovered from the wrong corpus. Each of those
+    is one line here.
+    """
+    from qdrant_client import models
+
+    work = cfg.storage.state_db.parent / "work"
+    client = index.connect(cfg)
+    sources = _sources(cfg, corpus)
+
+    rows: list[list[str]] = []
+    produced_total = 0
+    indexed_total = 0
+    no_chunks: list[str] = []
+    lost_pages: list[str] = []
+    trivial_captions = 0
+    captions_total = 0
+
+    for src in sources:
+        units = _load_units(_units_file(work, src, "units"))
+        caps = [c for c in _load_units(_units_file(work, src, "captions")) if c["text"].strip()]
+        captions_total += len(caps)
+        trivial_captions += sum(1 for c in caps if len(c["text"]) < 90)
+
+        produced = list(_chunks_for(cfg, src, work))
+        produced_total += len(produced)
+        try:
+            indexed = client.count(
+                cfg.storage.collection,
+                count_filter=models.Filter(
+                    must=[models.FieldCondition(key="source", match=models.MatchValue(value=src.rel))]
+                ),
+                exact=True,
+            ).count
+        except Exception:  # noqa: BLE001 - collection may not exist yet
+            indexed = 0
+        indexed_total += indexed
+
+        pages_with_text = sum(1 for u in units if u["text"].strip())
+        covered = {c.locator for c in produced}
+        missing = [u["locator"] for u in units if u["text"].strip() and u["locator"] not in covered]
+        if missing:
+            lost_pages.append(f"{src.rel}: {len(missing)} ({', '.join(missing[:6])})")
+        if not indexed:
+            no_chunks.append(src.rel)
+
+        chars = sum(len(u["text"].strip()) for u in units)
+        rows.append([
+            src.rel, src.type, src.module or "—",
+            f"{pages_with_text}/{len(units)}",
+            f"{chars // max(len(units), 1):,}",
+            str(len(caps)),
+            f"{indexed}" + ("" if indexed == len(produced) else f"/{len(produced)}"),
+        ])
+
+    checks = [
+        Check(not no_chunks, "every source is indexed",
+              "all sources have chunks" if not no_chunks
+              else f"{len(no_chunks)} indexed nowhere: {', '.join(no_chunks[:3])}"),
+        Check(produced_total == indexed_total, "nothing was lost on the way in",
+              f"{produced_total} chunks produced, {indexed_total} in the collection"
+              + ("" if produced_total == indexed_total
+                 else " — a mismatch means chunks share an id and overwrote each other")),
+        Check(not lost_pages, "no page with text was dropped",
+              "every page carrying text produced a chunk" if not lost_pages
+              else "; ".join(lost_pages[:3])),
+        Check(trivial_captions <= captions_total * 0.4, "captions carry content",
+              f"{captions_total} captions, {trivial_captions} trivial (\"Cover page.\", \"Blank page.\")"
+              + ("" if trivial_captions <= captions_total * 0.4
+                 else " — the graphics floor is letting empty pages through")),
+    ]
+    return rows, checks
+
+
+# "pages" is written as with-text/total, so a deck that extracted to nothing
+# reads as 0/137 at a glance.
+SUMMARY_COLUMNS = ["source", "type", "mod", "pages", "ch/pg", "cap", "chunks"]
+
+
+def summary_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
+    rows, checks = summary(cfg, corpus)
+    lines = [
+        f"# Review summary — {corpus.domain}",
+        "",
+        "## Checks",
+        "",
+    ]
+    for c in checks:
+        lines.append(f"- {c.mark} **{c.name}** — {c.detail}")
+    lines += ["", "## Sources", "", "| " + " | ".join(SUMMARY_COLUMNS) + " |",
+              "|" + "---|" * len(SUMMARY_COLUMNS)]
+    for row in rows:
+        lines.append("| " + " | ".join(row) + " |")
+    lines += [
+        "",
+        "`pages` is with-text/total · `ch/pg` characters per page · `cap` captions ·",
+        "`chunks` shows indexed/produced when the two differ.",
+        "",
+        "## Where to look next",
+        "",
+        "| question | file |",
+        "|---|---|",
+        "| did a page lose its text? | `extraction.md` |",
+        "| is a caption describing something that is not there? | `captions.md` |",
+        "| does search return the right passage? | `retrieval.md` |",
+        "",
+    ]
+    path = out.file("SUMMARY.md")
+    path.write_text("\n".join(lines))
+    return path
 
 
 # --------------------------------------------------------------------------

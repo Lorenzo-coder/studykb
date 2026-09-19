@@ -26,6 +26,11 @@ console = Console()
 STAGES = ("ocr", "extract", "asr_cleanup", "vision", "embed")
 
 
+def _ellipsis(text: str, width: int) -> str:
+    """Keep the end of a path: the filename tells them apart, the folder does not."""
+    return text if len(text) <= width else "…" + text[-(width - 1):]
+
+
 def _load(corpus: str, config: Path | None, root: Path | None = None):
     """Load config + corpus, applying the corpus-level overrides."""
     cfg = load_config(config)
@@ -180,7 +185,7 @@ def search(
 @app.command()
 def review(
     corpus: str = typer.Option(..., "--corpus"),
-    what: list[str] = typer.Option(None, "--what", help="extraction, captions, retrieval; default all"),
+    what: list[str] = typer.Option(None, "--what", help="summary, extraction, captions, retrieval; default all"),
     config: Path = typer.Option(None, "--config"),
     root: Path = typer.Option(None, "--root"),
     out: Path = typer.Option(None, "--out", help="Where to write the reports (default: <corpus root>/review)"),
@@ -190,14 +195,22 @@ def review(
 
     cfg, corp = _load(corpus, config, root)
     paths = review_mod.ReviewPaths(out or corp.root / "review")
-    wanted = set(what) if what else {"extraction", "captions", "retrieval"}
+    wanted = set(what) if what else {"summary", "extraction", "captions", "retrieval"}
 
-    table = Table(title=f"corpus: {corp.domain}")
-    for col, just in (("source", "left"), ("type", "left"), ("module", "left"), ("chunks", "right")):
-        table.add_column(col, justify=just)
-    for rel, type_, module, n in review_mod.inventory(cfg, corp):
-        table.add_row(rel[:60], type_, module or "—", str(n) if n else "[red]0[/]")
-    console.print(table)
+    if "summary" in wanted:
+        rows, checks = review_mod.summary(cfg, corp)
+        table = Table(title=f"corpus: {corp.domain}")
+        # Source titles here run past 90 characters. Only that column is
+        # clamped; clamping the rest shreds the numbers instead.
+        table.add_column("source", no_wrap=True, width=34)
+        for i, col in enumerate(review_mod.SUMMARY_COLUMNS[1:], start=1):
+            table.add_column(col, justify="right" if i >= 3 else "left")
+        for row in rows:
+            table.add_row(_ellipsis(row[0], 34), *row[1:])
+        console.print(table)
+        for c in checks:
+            console.print(f"{c.mark} [bold]{c.name}[/] — {c.detail}")
+        console.print(f"[green]✓[/] {review_mod.summary_report(cfg, corp, paths)}")
 
     if "extraction" in wanted:
         console.print(f"[green]✓[/] {review_mod.extraction_report(cfg, corp, paths)}")
