@@ -1,0 +1,36 @@
+[project]
+name = "studykb"
+version = "0.1.0"
+description = "Config-driven knowledge base for study corpora: ingest, index and serve books, slides, papers and lecture transcripts."
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "pyyaml>=6.0",
+    "typer>=0.15",
+    "httpx>=0.28",
+    "jinja2>=3.1",
+    "pymupdf4llm>=0.0.17",
+    "python-pptx>=1.0",
+    "webvtt-py>=0.5",
+    "openpyxl>=3.1",
+    "qdrant-client>=1.12",
+    "fastmcp>=2.0",
+    "rich>=13.9",
+]
+
+[project.scripts]
+studykb = "studykb.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8.3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/studykb"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

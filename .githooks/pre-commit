@@ -1,0 +1,12 @@
+#!/bin/sh
+# This repo is published to GitHub. Course recordings and copyrighted books
+# must not follow it there, and .gitignore alone loses to `git add -f`.
+blocked=$(git diff --cached --name-only --diff-filter=A \
+        | grep -Ei '\.(pdf|epub|vtt|srt|pptx|docx|xlsx|mp4|m4a)$' \
+        | grep -v '^tests/fixtures/')
+if [ -n "$blocked" ]; then
+    echo "pre-commit: corpus material cannot be committed:" >&2
+    echo "$blocked" | sed 's/^/  /' >&2
+    echo "Keep it under CORPUS_DIR. Override only if you are sure: git commit --no-verify" >&2
+    exit 1
+fi

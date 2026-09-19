@@ -1,0 +1,94 @@
+# Corpus manifest: the only file that knows anything about this subject matter.
+# Point studykb at a different corpus.yaml and it indexes a different subject
+# with no code change.
+
+domain: "qml-master"
+title: "Master in Quantum Machine Learning for Finance and Industry — Ca' Foscari"
+language: "en"
+
+# Sources live outside the repo and are never committed. Mounted at /corpus.
+root: "/corpus"
+
+# The real syllabus. The master publishes no syllabus document; the timetable is
+# the only record of what each lecture covered, so module titles, teachers and
+# lecture topics are read from it rather than typed by hand.
+calendar:
+  source: "Calendario_MasterQML_2526.xlsx"
+  sheet: "A.Y._2025_2026"
+  columns:                    # matched on header text; positional fallback if absent
+    date: "Date"
+    time: "Time-\ntable"
+    mode: "Lesson type"
+    module: "Teaching"
+    topic: "Lesson title / topic"
+    teacher: "Instructor"
+    institution: "Institution / Company"
+
+# Rules are tried in order and the first one to claim a file wins, so the
+# specific folders take precedence over the catch-all at the bottom. Material
+# downloaded next week is picked up without editing this file.
+sources:
+  - glob: "transcripts/**/*.vtt"
+    type: transcript
+  - glob: "transcripts/**/*.srt"
+    type: transcript
+  - glob: "slides/**/*.pdf"
+    type: slides
+    vision: force             # slides carry meaning in figures; always caption
+  - glob: "slides/**/*.pptx"
+    type: slides
+  - glob: "books/**/*.pdf"
+    type: book
+  - glob: "Book/**/*.pdf"     # the folder as it exists today
+    type: book
+  - glob: "papers/**/*.pdf"
+    type: paper
+  - glob: "**/*.pptx"
+    type: slides
+  - glob: "**/*.pdf"          # anything not placed above
+    type: paper
+
+# Enrolment forms, invoices and bookings sit in the same folders as the study
+# material. They are not study material and they poison retrieval.
+exclude:
+  - "admin/**"
+  - "Bando *.pdf"
+  - "Allegato Bando*.pdf"
+  - "Autocertificazione*.pdf"
+  - "ANIS_*.pdf"
+  - "dichiarazione*.pdf"
+  - "Documento*.pdf"
+  - "Elenco aziende*.pdf"
+  - "Libretto*.pdf"
+  - "Prenotazioni*.pdf"
+  - "saldoPagoPa*.pdf"
+  - "Booking.com*.pdf"
+  - "linee_guida_*.pdf"
+
+# How a file is assigned to a module. First hit wins; whatever is left over is
+# listed by `ingest --dry-run` and belongs in MANIFEST.md.
+module_rules:
+  - match: "path_regex"
+    pattern: "(?i)/M(?P<module>\\d+)[/_ -]"
+  - match: "path_regex"
+    pattern: "(?P<date>20\\d{2}-\\d{2}-\\d{2})"
+    resolve: "calendar_date"   # lecture date -> module, via the timetable
+  - match: "manifest"
+
+# Fed to the ASR-cleanup prompt on top of the calendar-derived glossary (lecture
+# titles and teacher names). Add whatever the captions keep mangling.
+glossary:
+  - "qubit"
+  - "entanglement"
+  - "superposition"
+  - "variational quantum circuit"
+  - "quantum annealing"
+  - "QUBO"
+  - "Hamiltonian"
+  - "Qiskit"
+  - "D-Wave"
+  - "Boltzmann machine"
+  - "tensor network"
+  - "noise mitigation"
+  - "Grover"
+  - "amplitude encoding"

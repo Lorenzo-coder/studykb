@@ -1,0 +1,64 @@
+# studykb defaults. Override per-key with env vars (STUDYKB__SECTION__KEY) or
+# with config/local.yaml, which is gitignored. Never edit code to change any of
+# the values below.
+
+# OpenAI-compatible endpoint. ollama, LM Studio, vLLM and the hosted APIs all
+# speak this, so one client covers every backend; swapping is a URL change.
+llm_endpoint: "http://host.docker.internal:11434/v1"
+llm_api_key: "ollama"          # ollama ignores it, the OpenAI client requires it
+
+models:
+  embed:
+    name: "bge-m3"
+    dim: 1024
+    batch: 32
+  vlm:
+    name: "qwen2.5vl:7b"
+    fallback: "granite3.2-vision:2b"
+    # Qwen2.5-VL uses dynamic resolution: uncapped, a full-res slide blows up the
+    # visual token count and saturates 8 GB of VRAM. 1280 px on the long side is
+    # the working ceiling on a 3070 Ti.
+    max_long_side_px: 1280
+  llm:
+    name: "qwen3:8b"
+    num_ctx: 16384
+    temperature: 0.2
+
+storage:
+  qdrant_url: "http://qdrant:6333"
+  collection: "studykb"
+  state_db: "/data/state.db"     # sqlite, drives incremental ingestion
+  vault: "/vault"                # bind-mounted Obsidian vault
+
+extract:
+  ocr:
+    enabled: true
+    # A page under this many characters is treated as having no text layer.
+    trigger_chars_per_page: 120
+    cmd: ["ocrmypdf", "--language", "ita+eng", "--skip-text", "--optimize", "1"]
+    timeout_s: 1800
+  vision:
+    enabled: true
+    # Few characters *and* images present means the meaning lives in the figure.
+    trigger_chars_per_page: 250
+    render_dpi: 150
+    timeout_s: 180
+
+transcript:
+  window_seconds: 300
+  # The course is taught in non-native English, so auto-captions mangle proper
+  # nouns and technical terms and lexical search stops finding them. This runs a
+  # local LLM over each window with a per-module glossary. Off => raw captions.
+  asr_cleanup: true
+
+chunk:
+  target_tokens: 800
+  overlap_tokens: 120
+  split_on: "headings"
+
+retrieval:
+  hybrid: true        # dense + Qdrant full-text, fused with RRF
+  k_dense: 30
+  k_lexical: 30
+  k_final: 8
+  rrf_k: 60

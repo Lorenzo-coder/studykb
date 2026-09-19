@@ -1,0 +1,56 @@
+# Models stay on the host (ollama), so no container needs the GPU: the studykb
+# container reaches them through host.docker.internal.
+#
+# Paths come from .env — see .env.example. Nothing about a specific corpus is
+# hardcoded here.
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  studykb:
+    build: .
+    image: studykb:latest
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      STUDYKB__STORAGE__QDRANT_URL: "http://qdrant:6333"
+    volumes:
+      # Read-only on purpose: OCR writes a searchable copy into /data instead of
+      # rewriting the originals, which are the only copies of some of this material.
+      - ${CORPUS_DIR:?set CORPUS_DIR in .env}:/corpus:ro
+      - ${VAULT_DIR:?set VAULT_DIR in .env}:/vault
+      - studykb_state:/data
+    # One-shot by default; `docker compose run --rm studykb ingest --corpus ...`.
+    command: ["--help"]
+
+  # The server is the only long-running role, so it is opt-in:
+  #   docker compose --profile serve up -d
+  studykb-serve:
+    extends:
+      service: studykb
+    profiles: ["serve"]
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8077:8077"
+    command: ["serve", "--corpus", "${CORPUS:-qml-master}"]
+    restart: unless-stopped
+
+volumes:
+  qdrant_storage:
+  studykb_state:

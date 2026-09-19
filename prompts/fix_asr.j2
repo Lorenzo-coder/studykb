@@ -1,0 +1,22 @@
+You are correcting an automatic transcript of a university lecture delivered in English by non-native speakers. The speech recognition mangles technical terms and proper nouns.
+
+{% if lecture %}Lecture topic: {{ lecture }}
+{% endif %}
+Terms that appear in this course and are frequently mis-transcribed:
+{{ glossary }}
+
+Correct ONLY:
+- misrecognised technical terms and proper nouns, using the list above
+- obvious word-boundary errors ("cue bit" -> "qubit")
+- sentence punctuation and capitalisation
+
+Do NOT:
+- summarise, shorten, reorder or paraphrase
+- add explanations, headings or commentary
+- complete unfinished sentences or fix the speaker's grammar
+- change any number, symbol or formula
+
+Return the corrected text only, same length and same order. If nothing needs correcting, return the input unchanged.
+
+---
+{{ text }}

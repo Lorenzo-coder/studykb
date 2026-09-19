@@ -1,0 +1,34 @@
+# --- Data never belongs in this repo ---------------------------------------
+# Source corpora (books, slides, recordings) and the Obsidian vault are data.
+# The repo is published to GitHub; copyrighted material and lecture recordings
+# must not follow it there. Enforced by .githooks/pre-commit.
+corpora/*/sources/
+vault/
+*.pdf
+*.epub
+*.vtt
+*.srt
+*.pptx
+*.docx
+*.xlsx
+*.mp4
+*.m4a
+
+# Tiny self-made fixtures are the one exception: tests must run on a fresh clone.
+!tests/fixtures/**
+
+# --- Derived state -----------------------------------------------------------
+state.db
+qdrant_storage/
+.cache/
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# --- Local overrides ---------------------------------------------------------
+.env
+config/local.yaml
