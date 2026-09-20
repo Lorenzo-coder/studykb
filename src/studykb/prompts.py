@@ -15,6 +15,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, Template, select_autoescape
 
 from .config import REPO_ROOT
+from .limits import FINGERPRINT_CHARS
 
 PROMPT_DIR = Path(os.environ.get("STUDYKB_PROMPTS", REPO_ROOT / "prompts"))
 
@@ -37,4 +38,4 @@ def version() -> str:
     for path in sorted(PROMPT_DIR.glob("*.j2")):
         h.update(path.name.encode())
         h.update(path.read_bytes())
-    return h.hexdigest()[:12]
+    return h.hexdigest()[:FINGERPRINT_CHARS]

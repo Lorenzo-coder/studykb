@@ -17,6 +17,7 @@ import subprocess
 from pathlib import Path
 
 from ..config import Config
+from ..limits import OCR_STDERR_TAIL
 from .pdf import text_layer_stats
 
 
@@ -45,6 +46,6 @@ def run_ocr(path: Path, out: Path, cfg: Config) -> Path:
     # 6 = "already has text", which --skip-text turns into a success for us.
     if proc.returncode not in (0, 6) or not tmp.exists():
         tmp.unlink(missing_ok=True)
-        raise RuntimeError(f"ocrmypdf failed on {path.name} ({proc.returncode}): {proc.stderr[-500:]}")
+        raise RuntimeError(f"ocrmypdf failed on {path.name} ({proc.returncode}): {proc.stderr[-OCR_STDERR_TAIL:]}")
     tmp.replace(out)   # atomic: a killed run never leaves a half-written PDF behind
     return out

@@ -20,6 +20,8 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
+from .limits import FINGERPRINT_CHARS
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ENV_PREFIX = "STUDYKB__"
 
@@ -95,6 +97,28 @@ class RetrievalCfg(BaseModel):
     k_final: int = 8
 
 
+class ReviewCfg(BaseModel):
+    """What makes a review check read green rather than amber.
+
+    These decide a verdict, not a layout: loosen one and a run that was warning
+    you about something stops warning you. How much each report *prints* is in
+    ``limits.py`` instead.
+    """
+
+    # A chunk this short is a title page or a part divider.
+    tiny_chunk_chars: int = 200
+    # Amber once tiny chunks pass this share of the total, but never before the
+    # floor: on a small corpus three title pages are not a problem.
+    tiny_chunk_share: float = Field(default=0.1, ge=0, le=1)
+    tiny_chunk_floor: int = 5
+    # "Cover page." and "Blank page." — a caption this short carries nothing.
+    trivial_caption_chars: int = 90
+    trivial_caption_share: float = Field(default=0.4, ge=0, le=1)
+    # Above this share of pages extracting to nothing, extraction.md marks the
+    # source 🔴 rather than ⚠️.
+    empty_pages_alarm_share: float = Field(default=0.5, ge=0, le=1)
+
+
 class Config(BaseModel):
     llm_endpoint: str
     llm_api_key: str = "ollama"
@@ -104,6 +128,7 @@ class Config(BaseModel):
     transcript: TranscriptCfg
     chunk: ChunkCfg
     retrieval: RetrievalCfg
+    review: ReviewCfg = ReviewCfg()
 
     @property
     def work(self) -> Path:
@@ -149,7 +174,7 @@ def _hash_obj(obj: Any) -> str:
     if isinstance(obj, BaseModel):
         obj = obj.model_dump(mode="json")
     blob = json.dumps(obj, sort_keys=True, default=str)
-    return hashlib.sha256(blob.encode()).hexdigest()[:12]
+    return hashlib.sha256(blob.encode()).hexdigest()[:FINGERPRINT_CHARS]
 
 
 # --------------------------------------------------------------------------

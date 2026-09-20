@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 from ..config import Config
+from ..limits import VISION_ERROR_HEAD
 from ..llm import LLM, strip_thinking
 from ..types import Unit
 
@@ -68,7 +69,7 @@ def caption_pages(pdf: Path, units: list[Unit], cfg: Config, llm: LLM, prompt: s
                         locator=unit.locator,
                         text="",
                         provenance="local-vlm",
-                        extra={"error": str(exc)[:200]},
+                        extra={"error": str(exc)[:VISION_ERROR_HEAD]},
                         page_no=unit.page_no,
                     )
                 )

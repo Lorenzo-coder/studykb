@@ -25,6 +25,7 @@ from . import calendar as cal
 from . import chunk as chunking
 from . import extract, index, prompts
 from .config import Config, Corpus
+from .limits import WORK_SHA_CHARS, WORK_STEM_CHARS
 from .llm import LLM
 from .state import State, file_sha
 from .types import Unit
@@ -246,7 +247,7 @@ def _stage_applies(stage: str, src: Source, cfg: Config) -> bool:
 
 
 def _units_file(work: Path, src: Source, kind: str) -> Path:
-    return work / kind / f"{src.sha[:16]}-{Path(src.rel).stem[:60]}.json"
+    return work / kind / f"{src.sha[:WORK_SHA_CHARS]}-{Path(src.rel).stem[:WORK_STEM_CHARS]}.json"
 
 
 def _save_units(path: Path, units: list[Unit]) -> None:
@@ -278,7 +279,7 @@ def _stage_ocr(cfg, sources, st, fp, work, report, log) -> None:
             if extract.ocr.needs_ocr(src.path, cfg):
                 log(f"[ocr] {src.rel}")
                 src.ocr_path = extract.ocr.run_ocr(
-                    src.path, work / "ocr" / f"{src.sha[:16]}.pdf", cfg
+                    src.path, work / "ocr" / f"{src.sha[:WORK_SHA_CHARS]}.pdf", cfg
                 )
                 out_ref = str(src.ocr_path)
                 report.bump("ocr")

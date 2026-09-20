@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from qdrant_client import QdrantClient, models
 
 from .config import Config
+from .limits import SEARCH_PASSAGE
 from .llm import LLM
 
 # Short tokens are noise as filter terms; they match everything.
@@ -105,7 +106,7 @@ def _hit(point: models.ScoredPoint) -> Hit:
     )
 
 
-def format_hits(hits: list[Hit], max_chars: int = 1200) -> str:
+def format_hits(hits: list[Hit], max_chars: int = SEARCH_PASSAGE) -> str:
     """Render hits for an agent.
 
     Every block leads with its citation and its provenance, so a caption written

@@ -86,7 +86,7 @@ the operator's call, via `studykb forget <path>`.
 ## What the fingerprint does not cover
 
 **Code changes.** Only config is hashed. There are manual version constants in
-`config.py::fingerprint` — `"extract": "v3"`, `"ocr": {... "code": "v2"}` — to
+`config.py::fingerprint` — `"extract": "v4"`, `"ocr": {... "code": "v2"}` — to
 bump when extraction or OCR logic changes. Forget, and the next run keeps last
 week's wrong output and calls it done.
 

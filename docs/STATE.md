@@ -1,6 +1,6 @@
 # Where this is right now
 
-Last updated: 2026-09-19. Read this first when resuming.
+Last updated: 2026-09-20. Read this first when resuming.
 
 > **Next session — agreed, ready to start.** Jump to [Next session](#next-session).
 
@@ -24,17 +24,26 @@ uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML --dr
 
 | stage | pending | why |
 |---|---|---|
-| `extract` | 13 | fingerprint format changed with the upstream-gating fix — one-off, ~9 min CPU |
-| `embed` | 14 | rows wiped by the shared-state bug, plus type-aware chunk ids |
+| `extract` | all 15 | the extract fingerprint is now the constant `v4`, so no source matches — see below |
+| `vision` / `embed` | all | they gate on extract through `_UPSTREAM`, so they follow it |
 | `ocr` | 1 | `FCaruso` now correctly detected — **needs the container**, ocrmypdf is not on the host |
 
-The 3,544 chunks already in Qdrant are intact and search works. Re-running costs
-about 15 minutes and fixes the 10 slide pages whose text a caption overwrote.
+`extract` went to `v4` when `Unit.has_images` was deleted: the field was written
+by both extractors and read by nobody, but units JSON written by `v3` still
+carries it, and `_load_units` does `Unit(**d)`, which rejects a key the class no
+longer has. Bumping the fingerprint rewrites those files instead.
+
+**So the next run must be a full one.** `--only` skips extract, leaves the old
+JSON in place and crashes on it.
 
 ```bash
-docker compose run --rm studykb ingest --corpus qml-master
+docker compose run --rm studykb ingest --corpus qml-master   # not --only
 uv run studykb review --corpus qml-master --root /home/locode/Personale/QML
 ```
+
+The 3,544 chunks already in Qdrant are intact and search works meanwhile.
+Re-running costs about 15 minutes and fixes the 10 slide pages whose text a
+caption overwrote.
 
 ## Blocked on material, not code
 
@@ -53,9 +62,25 @@ uv run studykb review --corpus qml-master --root /home/locode/Personale/QML
 | Docs language | English |
 | Docs depth | one per subsystem plus a glossary |
 | Roadmap scope | platform + operations, not the study workflow |
-| Repo | `/home/locode/Personale/studykb`, GitHub **private** — **not yet created**, `gh` is not installed |
+| Repo | `/home/locode/Personale/studykb` → `git@github.com:Lorenzo-coder/studykb.git`, private. Pushed over SSH; `gh` is still not installed |
 | Vision | slides only; measured net-negative on prose |
 | Models | local first: bge-m3, qwen2.5vl:7b, granite3.2-vision:2b, qwen3:8b |
+| Where a number lives | three places, by what it changes — see below |
+
+## Where to change a number
+
+Nothing tunable is buried in a function any more. A value lives in exactly one
+of three places, chosen by what changing it does:
+
+| place | what it holds | example |
+|---|---|---|
+| `config/default.yaml` | what gets indexed, and what a review check decides | `min_graphics`, `chunk.target_tokens`, `review.tiny_chunk_chars` |
+| `src/studykb/limits.py` | how much a report prints before it truncates | `VANISHED_LISTED`, `RETRIEVAL_PASSAGE` |
+| a constant at the top of its module | one value used only there | `CHARS_PER_TOKEN`, `MAX_GROWTH`, `_BOILERPLATE_SHARE` |
+
+The last section of `limits.py` is fenced off: `FINGERPRINT_CHARS`,
+`WORK_SHA_CHARS`, `WORK_STEM_CHARS` are key lengths already written into
+`state.db` and into filenames. Changing one reruns every stage of every source.
 
 ## Open, not decided
 

@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .config import CalendarCfg
+from .limits import HEADER_SCAN_ROWS
 
 _MODULE_NO = re.compile(r"^\s*(\d+)\s*[-–—]?\s*(.*)$", re.DOTALL)
 _BREAK = re.compile(r"(?i)\b(break|holiday|vacanz)")
@@ -208,7 +209,7 @@ def _find_header(rows: list[list], cfg: CalendarCfg) -> tuple[int, dict[str, int
     shift every field; positional defaults are the fallback.
     """
     wanted = cfg.columns or {}
-    for i, row in enumerate(rows[:20]):
+    for i, row in enumerate(rows[:HEADER_SCAN_ROWS]):
         cells = [_clean(c).lower() for c in row]
         if "date" not in cells:
             continue

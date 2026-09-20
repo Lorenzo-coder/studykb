@@ -24,14 +24,24 @@ import yaml
 from . import index, search as search_mod
 from .chunk import CHARS_PER_TOKEN
 from .config import Config, Corpus
+from .limits import (
+    CHUNK_CLOSES,
+    CHUNK_OPENS,
+    CHUNK_SEAM_MIN,
+    EMPTY_PAGES_LISTED,
+    EXTRACTION_PREVIEW,
+    LOST_PAGES_LISTED,
+    MISSING_LOCATORS_LISTED,
+    NO_CHUNKS_LISTED,
+    RETRIEVAL_K,
+    RETRIEVAL_PASSAGE,
+    RETRIEVAL_TITLE,
+    SLUG_CHARS,
+    TINY_CHUNKS_LISTED,
+)
 from .llm import LLM
 from .pipeline import Source, _chunks_for, _load_calendar, _units_file, discover
 from .state import file_sha
-
-
-# Below this a chunk is a title page or a part divider: it will never be a
-# useful hit, but it still occupies a vector.
-TINY_CHUNK = 200
 
 
 def _sources(cfg: Config, corpus: Corpus) -> list[Source]:
@@ -46,7 +56,7 @@ def _load_units(path: Path) -> list[dict]:
 
 
 def _slug(rel: str) -> str:
-    return "".join(c if c.isalnum() or c in "-_" else "-" for c in Path(rel).stem)[:60]
+    return "".join(c if c.isalnum() or c in "-_" else "-" for c in Path(rel).stem)[:SLUG_CHARS]
 
 
 def _render_for_review(src: Source, cap: dict, cfg: Config, out_dir: Path) -> Path | None:
@@ -90,6 +100,7 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
     page it described, a source discovered from the wrong corpus. Each of those
     is one line here.
     """
+    rev = cfg.review
     work = cfg.work
     client = index.connect(cfg)
     sources = _sources(cfg, corpus)
@@ -111,11 +122,11 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
         units = _load_units(_units_file(work, src, "units"))
         caps = [c for c in _load_units(_units_file(work, src, "captions")) if c["text"].strip()]
         captions_total += len(caps)
-        trivial_captions += sum(1 for c in caps if len(c["text"]) < 90)
+        trivial_captions += sum(1 for c in caps if len(c["text"]) < rev.trivial_caption_chars)
 
         produced = list(_chunks_for(cfg, src, work))
         produced_total += len(produced)
-        tiny_chunks += sum(1 for c in produced if len(c.text) < TINY_CHUNK)
+        tiny_chunks += sum(1 for c in produced if len(c.text) < rev.tiny_chunk_chars)
         indexed = indexed_by_source.get(src.rel, 0)
         indexed_total += indexed
 
@@ -123,7 +134,9 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
         covered = {c.locator for c in produced}
         missing = [u["locator"] for u in units if u["text"].strip() and u["locator"] not in covered]
         if missing:
-            lost_pages.append(f"{src.rel}: {len(missing)} ({', '.join(missing[:6])})")
+            lost_pages.append(
+                f"{src.rel}: {len(missing)} ({', '.join(missing[:MISSING_LOCATORS_LISTED])})"
+            )
         if not indexed:
             no_chunks.append(src.rel)
 
@@ -136,24 +149,26 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
             f"{indexed}" + ("" if indexed == len(produced) else f"/{len(produced)}"),
         ])
 
+    tiny_ok = tiny_chunks <= max(produced_total * rev.tiny_chunk_share, rev.tiny_chunk_floor)
+    captions_ok = trivial_captions <= captions_total * rev.trivial_caption_share
     checks = [
         Check(not no_chunks, "every source is indexed",
               "all sources have chunks" if not no_chunks
-              else f"{len(no_chunks)} indexed nowhere: {', '.join(no_chunks[:3])}"),
+              else f"{len(no_chunks)} indexed nowhere: {', '.join(no_chunks[:NO_CHUNKS_LISTED])}"),
         Check(produced_total == indexed_total, "nothing was lost on the way in",
               f"{produced_total} chunks produced, {indexed_total} in the collection"
               + ("" if produced_total == indexed_total
                  else " — a mismatch means chunks share an id and overwrote each other")),
         Check(not lost_pages, "no page with text was dropped",
               "every page carrying text produced a chunk" if not lost_pages
-              else "; ".join(lost_pages[:3])),
-        Check(tiny_chunks <= max(produced_total * 0.1, 5), "chunks are worth indexing",
-              f"{tiny_chunks} of {produced_total} chunks are under {TINY_CHUNK} characters"
-              + ("" if tiny_chunks <= max(produced_total * 0.1, 5)
+              else "; ".join(lost_pages[:LOST_PAGES_LISTED])),
+        Check(tiny_ok, "chunks are worth indexing",
+              f"{tiny_chunks} of {produced_total} chunks are under {rev.tiny_chunk_chars} characters"
+              + ("" if tiny_ok
                  else " — mostly title pages and dividers, they dilute retrieval")),
-        Check(trivial_captions <= captions_total * 0.4, "captions carry content",
+        Check(captions_ok, "captions carry content",
               f"{captions_total} captions, {trivial_captions} trivial (\"Cover page.\", \"Blank page.\")"
-              + ("" if trivial_captions <= captions_total * 0.4
+              + ("" if captions_ok
                  else " — the graphics floor is letting empty pages through")),
     ]
     return rows, checks
@@ -201,7 +216,7 @@ def summary_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
 # --------------------------------------------------------------------------
 # 1. Extraction
 # --------------------------------------------------------------------------
-def extraction_report(cfg: Config, corpus: Corpus, out: Path, preview: int = 400) -> Path:
+def extraction_report(cfg: Config, corpus: Corpus, out: Path, preview: int = EXTRACTION_PREVIEW) -> Path:
     """Per page: how much text came out, and the start of it.
 
     Empty and near-empty pages are called out at the top, because a page that
@@ -226,9 +241,10 @@ def extraction_report(cfg: Config, corpus: Corpus, out: Path, preview: int = 400
         ]
         if empty:
             share = len(empty) / len(units)
-            flag = "🔴" if share > 0.5 else "⚠️"
-            lines.append(f"- {flag} **{len(empty)} pages extracted to nothing** ({share:.0%}): {', '.join(empty[:12])}"
-                         + (" …" if len(empty) > 12 else ""))
+            flag = "🔴" if share > cfg.review.empty_pages_alarm_share else "⚠️"
+            lines.append(f"- {flag} **{len(empty)} pages extracted to nothing** ({share:.0%}): "
+                         f"{', '.join(empty[:EMPTY_PAGES_LISTED])}"
+                         + (" …" if len(empty) > EMPTY_PAGES_LISTED else ""))
         lines.append("")
 
         lines += ["| page | chars | text starts |", "|---|---:|---|"]
@@ -342,7 +358,7 @@ def chunks_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
         pages = len({c.locator for c in chunks})
         ceiling = cfg.chunk.target_tokens * CHARS_PER_TOKEN
         under = sum(1 for n in sizes if n < ceiling)
-        tiny = [c for c in chunks if len(c.text) < TINY_CHUNK]
+        tiny = [c for c in chunks if len(c.text) < cfg.review.tiny_chunk_chars]
         lines += [
             f"## {src.rel}",
             "",
@@ -353,8 +369,9 @@ def chunks_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
         ]
         if tiny:
             lines.append(
-                f"- {len(tiny)} chunks under {TINY_CHUNK} characters — title pages and part "
-                f"dividers ({', '.join(c.locator for c in tiny[:8])}). Index noise, not content."
+                f"- {len(tiny)} chunks under {cfg.review.tiny_chunk_chars} characters — title pages "
+                f"and part dividers ({', '.join(c.locator for c in tiny[:TINY_CHUNKS_LISTED])}). "
+                f"Index noise, not content."
             )
         lines += [
             "",
@@ -363,8 +380,8 @@ def chunks_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
         ]
         for i, c in enumerate(chunks, 1):
             text = " ".join(c.text.split())
-            opens = text[:110].replace("|", "\\|")
-            closes = text[-70:].replace("|", "\\|") if len(text) > 180 else ""
+            opens = text[:CHUNK_OPENS].replace("|", "\\|")
+            closes = text[-CHUNK_CLOSES:].replace("|", "\\|") if len(text) > CHUNK_SEAM_MIN else ""
             seam = f"{opens} **…** {closes}" if closes else opens
             lines.append(
                 f"| {i} | `{c.locator}` | {c.type} | {c.provenance} | {len(c.text):,} | {seam} |"
@@ -402,7 +419,7 @@ def retrieval_report(cfg: Config, corpus: Corpus, out: Path, queries_file: Path)
         for q in queries:
             hits = search_mod.search(
                 client, cfg, llm, q["query"],
-                module=q.get("module"), type_=q.get("type"), k=q.get("k", 5),
+                module=q.get("module"), type_=q.get("type"), k=q.get("k", RETRIEVAL_K),
             )
             lines += [f"## {q['query']}", ""]
             filters = [f"{k}={v}" for k, v in q.items() if k in ("module", "type")]
@@ -413,9 +430,10 @@ def retrieval_report(cfg: Config, corpus: Corpus, out: Path, queries_file: Path)
                 lines.append(f"expected `{expect}` — {'✅ present' if found else '❌ absent'}")
             lines += ["", "| # | source | locator | provenance | score | passage |", "|---|---|---|---|---:|---|"]
             for i, h in enumerate(hits, 1):
-                text = " ".join(h.text.split())[:220].replace("|", "\\|")
+                text = " ".join(h.text.split())[:RETRIEVAL_PASSAGE].replace("|", "\\|")
                 lines.append(
-                    f"| {i} | {h.source_title[:40]} | `{h.locator}` | {h.provenance} | {h.score:.3f} | {text} |"
+                    f"| {i} | {h.source_title[:RETRIEVAL_TITLE]} | `{h.locator}` | {h.provenance} "
+                    f"| {h.score:.3f} | {text} |"
                 )
             lines.append("")
 

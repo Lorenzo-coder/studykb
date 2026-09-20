@@ -17,6 +17,7 @@ from rich.table import Table
 
 from . import index, pipeline, prompts, search as search_mod
 from .config import load_config, load_corpus
+from .limits import SOURCE_COLUMN_WIDTH, UNASSIGNED_LISTED, VANISHED_LISTED
 from .llm import LLM
 
 app = typer.Typer(add_completion=False, help="Config-driven knowledge base for study corpora.")
@@ -133,7 +134,7 @@ def ingest(
     if report.unassigned:
         console.print(f"\n[yellow]{len(report.unassigned)} sources with no module[/] "
                       f"— add them to {corp.manifest_dir / 'MANIFEST.md'}:")
-        for rel in report.unassigned[:20]:
+        for rel in report.unassigned[:UNASSIGNED_LISTED]:
             console.print(f"  | {rel} |  |")
     if report.empty:
         console.print(f"\n[yellow]{len(report.empty)} sources produced no chunks[/] "
@@ -144,7 +145,7 @@ def ingest(
     if report.vanished:
         console.print(f"\n[yellow]{len(report.vanished)} known sources are missing from disk[/] "
                       f"(chunks kept; `studykb forget <path>` to drop them)")
-        for rel in report.vanished[:10]:
+        for rel in report.vanished[:VANISHED_LISTED]:
             console.print(f"  {rel}")
     for err in report.errors:
         console.print(f"[red]error[/] {err}")
@@ -206,11 +207,11 @@ def review(
         table = Table(title=f"corpus: {corp.domain}")
         # Source titles here run past 90 characters. Only that column is
         # clamped; clamping the rest shreds the numbers instead.
-        table.add_column("source", no_wrap=True, width=34)
+        table.add_column("source", no_wrap=True, width=SOURCE_COLUMN_WIDTH)
         for i, col in enumerate(review_mod.SUMMARY_COLUMNS[1:], start=1):
             table.add_column(col, justify="right" if i >= 3 else "left")
         for row in rows:
-            table.add_row(_ellipsis(row[0], 34), *row[1:])
+            table.add_row(_ellipsis(row[0], SOURCE_COLUMN_WIDTH), *row[1:])
         console.print(table)
         for c in checks:
             console.print(f"{c.mark} [bold]{c.name}[/] — {c.detail}")

@@ -1,14 +1,17 @@
 # Configuration
 
-`src/studykb/config.py` · 245 lines
+`src/studykb/config.py` · `src/studykb/limits.py`
 
 Two layers, both data, never code. The split is the whole point: one says *how*
 to index, the other says *what*.
 
 | layer | file | scope |
 |---|---|---|
-| how | `config/default.yaml` | models, thresholds, storage, chunking, retrieval |
+| how | `config/default.yaml` | models, thresholds, storage, chunking, retrieval, review verdicts |
 | what | `corpora/<domain>/corpus.yaml` | globs, types, module rules, timetable, glossary |
+
+A third file, `limits.py`, is not configuration — see
+[Numbers that are not settings](#numbers-that-are-not-settings).
 
 ## Loading
 
@@ -66,9 +69,33 @@ Three details that are easy to get wrong:
 - **The chunk config is folded into `embed`**, because changing chunk size
   changes what gets embedded.
 - **Config changes invalidate a stage; code changes do not.** There are literal
-  version constants — `"ocr": {... "code": "v2"}`, `"extract": "v3"` — to bump
+  version constants — `"ocr": {... "code": "v2"}`, `"extract": "v4"` — to bump
   by hand when the extraction logic changes. Forget, and the next run keeps last
   week's wrong output and reports success.
+
+## Numbers that are not settings
+
+A value belongs in YAML when changing it changes *what studykb does*: what gets
+indexed, or what a check decides. `review:` is the second kind — `tiny_chunk_chars`,
+`trivial_caption_share` and the rest decide whether a `studykb review` run reads
+✅ or ⚠️, so they are a verdict, not a layout.
+
+Everything else that used to be a bare number in a function now lives in
+`src/studykb/limits.py`: how many sources `ingest` lists before it truncates, how
+many characters of a passage `retrieval.md` prints, how long an error excerpt is.
+None of it changes an index or a verdict, and routing it through pydantic would
+mean threading `cfg` into `format_hits()` and `_ellipsis()`, which take none.
+
+Its last section is fenced off and says so. `FINGERPRINT_CHARS`,
+`WORK_SHA_CHARS` and `WORK_STEM_CHARS` are the lengths of keys already written
+into `state.db` and into filenames under the work directory. Changing
+`FINGERPRINT_CHARS` reruns every stage of every source, because no stored
+fingerprint matches any more.
+
+A value used in exactly one module stays a constant at the top of it —
+`CHARS_PER_TOKEN` in `chunk.py`, `MAX_GROWTH` in `extract/asr.py`,
+`_BOILERPLATE_SHARE` in `extract/pdf.py`. Moving those to `limits.py` would put
+the number further from the reasoning that picked it.
 
 ## Adding a setting
 

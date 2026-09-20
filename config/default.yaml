@@ -64,3 +64,21 @@ retrieval:
   k_dense: 30
   k_lexical: 30
   k_final: 8
+
+# What makes a `studykb review` check read ✅ rather than ⚠️. These change a
+# verdict, so loosening one means a run stops warning you about something.
+# How much each report *prints* is not here — that is src/studykb/limits.py.
+review:
+  # Below this a chunk is a title page or a part divider: never a useful hit,
+  # but it still occupies a vector.
+  tiny_chunk_chars: 200
+  # Amber once tiny chunks pass this share, but never below the floor: on a
+  # small corpus three title pages are not a problem.
+  tiny_chunk_share: 0.1
+  tiny_chunk_floor: 5
+  # "Cover page." — a caption this short describes nothing.
+  trivial_caption_chars: 90
+  trivial_caption_share: 0.4
+  # Above this share of a source's pages extracting to nothing, extraction.md
+  # marks it 🔴 instead of ⚠️.
+  empty_pages_alarm_share: 0.5
