@@ -170,9 +170,12 @@ QGAN, Qiskit). Their markdown cells are prose worth indexing, and a notebook is
 JSON, so an extractor is ~20 lines of stdlib with no new dependency: markdown
 cells only, `cell N` as the locator, outputs discarded. **Not built yet.**
 
-The 9 files under `pyhtonTest/src/` are the thesis code and should stay out: code
-is found with grep rather than by vector similarity, it is already open in the
-editor, and an index of it goes stale on every edit.
+`pyhtonTest/` is **not thesis code** — corrected by its author. It is a past
+exercise: a knapsack pipeline solving the same problem four ways (Pyomo/Gurobi
+exact, QUBO, Qiskit QAOA, dimod annealing), first committed 14 March 2026, the
+day of M1's "Introduction to Python" with Raffaele Pesenti. It lives outside the
+corpus root; indexing it means symlinking the 9 files into `kb/code/`, which
+keeps one copy on disk and stays current.
 
 ## Open, not decided
 
@@ -183,8 +186,10 @@ editor, and an index of it goes stale on every edit.
 - Three test-corpus sources still have no module in `corpora/test/MANIFEST.md`,
   so the `-m` filter is untested.
 - Thesis direction. `vault/20-thesis/shortlist.md` recommends preparing B
-  (QUBO portfolio selection, extending `QML/pyhtonTest`) and aiming for A
-  (quantum diffusion for financial time series).
+  (QUBO portfolio selection) and aiming for A (quantum diffusion for financial
+  time series). An earlier version of this note said B would extend
+  `QML/pyhtonTest`; that is wrong — the knapsack pipeline is a past exercise and
+  nothing in the thesis builds on it. Neither option has a starting point yet.
 
 ## The date that governs everything
 
