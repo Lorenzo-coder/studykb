@@ -1,6 +1,6 @@
 # Where this is right now
 
-Last updated: 2026-09-20 (second pass). Read this first when resuming.
+Last updated: 2026-09-20 (indexed). Read this first when resuming.
 
 > **Next session — agreed, ready to start.** Jump to [Next session](#next-session).
 
@@ -13,37 +13,38 @@ exist is everything around it — backup, scheduling, CI. Two capabilities are
 written but have never run because the material is missing: OCR needs a scanned
 PDF, ASR cleanup needs lecture captions.
 
-## Pending work on the real corpus
+## The corpus is indexed
 
-`qml-master` has work queued from correctness fixes made after it was last
-indexed. **Nothing has been run on it since**, on purpose.
+Run `2cf6ed7c08a8`, 20 September. 116 sources, **6,913 chunks**, no errors, and
+all five review checks green.
 
-```bash
-uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML/kb --dry-run
+| stage | time | sources | items | per item | Wh | peak W |
+|---|---|---|---|---|---|---|
+| extract | 16m12s | 116 | 116 | 8.4s | 5.6 | 21 |
+| vision | 46m50s | 33 | 731 captions | 3.8s | 77.8 | 129 |
+| embed | 3m54s | 116 | 6,913 chunks | 2.0s | 5.9 | 141 |
+| **total** | **1h06m** | | | | **89.3** | |
+
+1.2M tokens into the vision model, 2.9M into the embedder. The estimate before
+the run was 30-40 minutes and it was wrong by roughly half: captioning a dense
+lecture slide takes 3.8s, not the 1.8s measured on a sparse handwritten page,
+and 16 minutes of CPU extraction over 2,000+ pages had not been counted at all.
+
+Checks:
+
+```
+✅ every source is indexed
+✅ nothing was lost on the way in — 6913 produced, 6913 in the collection
+✅ no page with text was dropped
+✅ prose chunks are worth indexing — 105 of 4232 under 200 chars (2.5%)
+✅ captions carry content — 731 captions, 57 trivial (7.8%)
 ```
 
-| stage | pending | why |
-|---|---|---|
-| `extract` | all 15 | the extract fingerprint is now the constant `v4`, so no source matches — see below |
-| `vision` / `embed` | all | they gate on extract through `_UPSTREAM`, so they follow it |
-| `ocr` | 0 | **switch it off** — the one file that triggered it is handwriting, see below |
+Retrieval verified by hand: `-m M3` returns Droghetti's notes, `--type code`
+returns GroverTutorial with cell-range locators, and a plain query for
+backpropagation returns Ligorio's M2 deck at p.37.
 
-`extract` went to `v4` when `Unit.has_images` was deleted: the field was written
-by both extractors and read by nobody, but units JSON written by `v3` still
-carries it, and `_load_units` does `Unit(**d)`, which rejects a key the class no
-longer has. Bumping the fingerprint rewrites those files instead.
-
-**So the next run must be a full one.** `--only` skips extract, leaves the old
-JSON in place and crashes on it.
-
-```bash
-uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML/kb   # not --only
-uv run studykb review --corpus qml-master --root /home/locode/Personale/QML/kb
-```
-
-The 3,544 chunks already in Qdrant are intact and search works meanwhile.
-Re-running costs about 15 minutes and fixes the 10 slide pages whose text a
-caption overwrote.
+**Still missing: every transcript, and all of M8.**
 
 ## FCaruso: handwriting, not a scan
 
@@ -123,17 +124,9 @@ calls, tokens, and watt-hours integrated from `nvidia-smi` while it ran.
 `ingest` prints the table when it finishes; `studykb stats` compares it against
 previous runs. See [metrics.md](internals/metrics.md).
 
-Measured on the test corpus (3 sources, 488 chunks), RTX 3070 Ti Laptop:
-
-| stage | time | items | per item | Wh | peak W |
-|---|---|---|---|---|---|
-| extract | 1m18s | 3 sources | 26s | 0.4 | 20 |
-| vision | 51s | 10 captions | 5.2s | 1.2 | 108 |
-| embed | 22s | 3 sources · 488 chunks | — | 0.4 | 98 |
-| **total** | **2m32s** | | | **2.0** | |
-
 The figure is whole-GPU draw, not this process's share, and it excludes the
-CPU — which is why `extract`, pure CPU work, shows 0.4 Wh at an idle 20 W.
+CPU — which is why `extract`, pure CPU work, reads 5.6 Wh at an idle 21 W over
+sixteen minutes. The real run is in [The corpus is indexed](#the-corpus-is-indexed).
 
 Compare `per item` between runs, never total time: the corpus grows.
 

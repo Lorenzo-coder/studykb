@@ -43,6 +43,11 @@ from .llm import LLM
 from .pipeline import Source, _chunks_for, _load_calendar, _units_file, discover
 from .state import file_sha
 
+# Types where a short chunk means something went wrong. A book or a paper that
+# yields 80 characters yielded a title page or a part divider. A slide that
+# yields 80 characters yielded a slide.
+PROSE_TYPES = ("book", "paper")
+
 
 def _sources(cfg: Config, corpus: Corpus) -> list[Source]:
     sources, _ = discover(corpus, _load_calendar(cfg, corpus, log=lambda *_: None))
@@ -116,7 +121,9 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
     lost_pages: list[str] = []
     trivial_captions = 0
     captions_total = 0
-    tiny_chunks = 0
+    tiny_prose = 0
+    prose_total = 0
+    tiny_short_form = 0
 
     for src in sources:
         units = _load_units(_units_file(work, src, "units"))
@@ -126,7 +133,16 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
 
         produced = list(_chunks_for(cfg, src, work))
         produced_total += len(produced)
-        tiny_chunks += sum(1 for c in produced if len(c.text) < rev.tiny_chunk_chars)
+        # Only prose is measured. On a slide deck a title and three bullets is
+        # what a slide *is*: it carries its own locator and is a legitimate
+        # thing to return. Counting those made the check read amber on a corpus
+        # where nothing was wrong — 657 of 825 short chunks came from slides.
+        prose = [c for c in produced if c.type in PROSE_TYPES]
+        prose_total += len(prose)
+        tiny_prose += sum(1 for c in prose if len(c.text) < rev.tiny_chunk_chars)
+        tiny_short_form += sum(
+            1 for c in produced if c.type not in PROSE_TYPES and len(c.text) < rev.tiny_chunk_chars
+        )
         indexed = indexed_by_source.get(src.rel, 0)
         indexed_total += indexed
 
@@ -149,7 +165,7 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
             f"{indexed}" + ("" if indexed == len(produced) else f"/{len(produced)}"),
         ])
 
-    tiny_ok = tiny_chunks <= max(produced_total * rev.tiny_chunk_share, rev.tiny_chunk_floor)
+    tiny_ok = tiny_prose <= max(prose_total * rev.tiny_chunk_share, rev.tiny_chunk_floor)
     captions_ok = trivial_captions <= captions_total * rev.trivial_caption_share
     checks = [
         Check(not no_chunks, "every source is indexed",
@@ -162,10 +178,12 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
         Check(not lost_pages, "no page with text was dropped",
               "every page carrying text produced a chunk" if not lost_pages
               else "; ".join(lost_pages[:LOST_PAGES_LISTED])),
-        Check(tiny_ok, "chunks are worth indexing",
-              f"{tiny_chunks} of {produced_total} chunks are under {rev.tiny_chunk_chars} characters"
-              + ("" if tiny_ok
-                 else " — mostly title pages and dividers, they dilute retrieval")),
+        Check(tiny_ok, "prose chunks are worth indexing",
+              f"{tiny_prose} of {prose_total} book and paper chunks are under "
+              f"{rev.tiny_chunk_chars} characters"
+              + ("" if tiny_ok else " — title pages and dividers, they dilute retrieval")
+              # Reported, just not counted against the check.
+              + f" · {tiny_short_form} more in slides, captions and code, where short is normal"),
         Check(captions_ok, "captions carry content",
               f"{captions_total} captions, {trivial_captions} trivial (\"Cover page.\", \"Blank page.\")"
               + ("" if captions_ok
