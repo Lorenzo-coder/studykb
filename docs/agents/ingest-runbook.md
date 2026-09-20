@@ -7,9 +7,12 @@ corpus files to "check" anything.
 
 ```bash
 uv run studykb doctor                                  # must exit 0
-uv run studykb ingest --corpus qml-master --dry-run    # shows what would run
-uv run studykb ingest --corpus qml-master
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb --dry-run
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb
 ```
+
+**Never add `--only` to a first run.** Each stage reads what the one above it
+wrote; skipping extraction leaves older files for the later stages to choke on.
 
 Report back: the per-stage table, the chunk count, and any unassigned sources.
 Nothing else.
@@ -33,7 +36,7 @@ Stages share one 8 GB GPU and run one at a time. A run that seems stuck on
 |---|---|
 | `doctor`: `✗ vlm: qwen2.5vl:7b` | `ollama pull qwen2.5vl:7b`, rerun `doctor` |
 | `doctor`: `✗ Qdrant unreachable` | `docker compose up -d qdrant`, wait for healthy |
-| `doctor`: `! ocrmypdf missing` | expected outside the container; run ingest via `docker compose run --rm studykb` |
+| `doctor`: `! ocrmypdf missing` | expected, and harmless: OCR is switched off in `config/default.yaml` |
 | `error ocr <file>` | report the filename, continue. One bad PDF does not stop a run |
 | `error vision <file>` | same. The fallback model already tried |
 | `collection ... has dim N but config says M` | stop. Changing the embedding model means a reindex — ask first |

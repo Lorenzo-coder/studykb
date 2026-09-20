@@ -13,21 +13,24 @@ cd ~/Personale/studykb
 
 ## Step 0 — Start the services
 
-Two containers must be running: the search database (Qdrant) and the server that
-exposes the tools.
+The search database (Qdrant) must be running. The server is optional and only
+needed for Step 8.
 
 ```bash
-docker compose up -d
-docker compose --profile serve up -d
+docker compose up -d qdrant
+docker compose --profile serve up -d     # only if you want the MCP server
 ```
 
-Check they are up:
+Check:
 
 ```bash
 docker compose ps
 ```
 
-Expected: two lines, `qdrant` and `studykb-serve`, both `Up`.
+**Everything else runs on your machine, not in a container.** The container has
+its own state file and its own work directory, so ingesting there and reviewing
+here would report every source as "not extracted" — two directories, not a bug.
+Pick the host and stay on it.
 
 You also need **ollama running on your machine**, because that is where the
 models live. It normally starts with the system. Check:
@@ -53,7 +56,7 @@ Expected: every line has a green ✓.
 |---|---|---|
 | `✗ embed: bge-m3` | a model is missing | `ollama pull bge-m3` |
 | `✗ Qdrant unreachable` | the database is not running | go back to Step 0 |
-| `! ocrmypdf missing` | **normal** outside the container | ignore it; OCR runs in the container |
+| `! ocrmypdf missing` | **normal** | ignore it — OCR is switched off, see Step 5 |
 
 Do not go further until `doctor` is clean. A missing model only fails three
 stages into a run that has already taken twenty minutes.
@@ -62,26 +65,36 @@ stages into a run that has already taken twenty minutes.
 
 ## Step 2 — Put the material in place
 
-Files go in `~/Personale/QML/`, sorted by what they are:
+Files go in `~/Personale/QML/kb/`, sorted by what they are. **The folder
+decides the type**, and the type decides whether figures get described:
 
-| Folder | What goes in it |
-|---|---|
-| `Book/` | textbooks |
-| `slides/` | lecture decks (PDF or PowerPoint) |
-| `papers/` | papers |
-| `transcripts/` | lecture subtitles (`.vtt` or `.srt`) |
+| Folder | What goes in it | Figures described? |
+|---|---|---|
+| `books/` | textbooks, long reference documents | no |
+| `papers/` | papers, lecture notes, exercises | no |
+| `slides/` | lecture decks, handwritten lectures (PDF or PowerPoint) | **yes** |
+| `code/` | notebooks (`.ipynb`), scripts (`.py`), notes (`.md`) | no |
+| `transcripts/` | lecture subtitles (`.vtt` or `.srt`) | no |
 
-Folders that do not exist yet, create them. File names do not matter.
+Getting this wrong costs something real: a deck dropped anywhere else is typed
+`paper`, and on a deck roughly 40% of the content lives in diagrams that only a
+figure description makes findable.
 
-Anything that is not study material — enrolment forms, invoices, bookings — is
-already excluded by name in `corpora/qml-master/corpus.yaml`.
+Folders are **flat** — no `M1/`, `M2/` subfolders. A file's path is its
+identity, so moving it later creates a second source under the new path while
+the old chunks stay behind. The module goes in `MANIFEST.md` instead, where
+changing it is editing a line.
+
+`kb/` holds study material **and nothing else**. Paperwork, the thesis code and
+the vault live outside it, which is why `corpus.yaml` has an empty `exclude`
+list. If that list ever needs to grow again, the root is in the wrong place.
 
 ---
 
 ## Step 3 — See what would happen, without doing it
 
 ```bash
-uv run studykb ingest --corpus qml-master --root ~/Personale/QML --dry-run
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb --dry-run
 ```
 
 Nothing is written. You get a table of how much work each stage would do, and a
@@ -129,17 +142,34 @@ Run Step 3 again and confirm the list is now empty.
 
 ## Step 5 — Ingest
 
-Run it **inside the container**, because that is where the OCR tool lives:
-
 ```bash
-docker compose run --rm studykb ingest --corpus qml-master
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb
 ```
 
-This takes time. On the full corpus, about 15 minutes for text, plus roughly one
-minute per 10 slide pages that need a figure description.
+**Run it whole. Never with `--only`.** Each stage reads what the one above it
+wrote, and skipping extraction leaves older files in place for the later stages
+to choke on.
+
+This takes time. On the full corpus, roughly 30-40 minutes, most of it the
+figure descriptions at about 1.8 seconds a page.
+
+OCR is switched off. The only files that trigger it are lectures handwritten on
+a tablet, and `ocrmypdf` reads printed type — worse, its output would be indexed
+as `provenance: text-layer`, the most trusted label, so a run would file its
+guesses as if they had been read from the file. Turn it back on the day a scan
+of *printed* text arrives.
 
 You will see stages go past: `ocr`, `extract`, `asr_cleanup`, `vision`, `embed`.
-At the end, a table and a chunk count.
+At the end, a chunk count and a **cost table**: wall time, model calls, tokens
+and watt-hours per stage.
+
+```bash
+uv run studykb stats --corpus qml-master            # compare against past runs
+uv run studykb stats --corpus qml-master --run a1b2 # one run, stage by stage
+```
+
+Compare `per item` between runs, never the total: the total rises because the
+corpus grew.
 
 **Read the warnings at the bottom:**
 
@@ -159,7 +189,7 @@ those ten files.
 This is the important step. **Never skip it after adding new material.**
 
 ```bash
-uv run studykb review --corpus qml-master --root ~/Personale/QML
+uv run studykb review --corpus qml-master --root ~/Personale/QML/kb
 ```
 
 It writes five files into `~/Personale/QML/vault/95-review/`.
@@ -265,12 +295,34 @@ curl -s localhost:8077/healthz
 Three commands:
 
 ```bash
-docker compose run --rm studykb ingest --corpus qml-master
-uv run studykb review --corpus qml-master --root ~/Personale/QML
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb
+uv run studykb review --corpus qml-master --root ~/Personale/QML/kb
 # then open vault/95-review/SUMMARY.md
 ```
 
 Only the new files are processed. Everything already indexed is left alone.
+
+---
+
+## Starting over from zero
+
+When you want to rebuild rather than update — after a big reorganisation, or
+because you no longer trust what is in there:
+
+```bash
+docker compose up -d qdrant
+curl -X DELETE http://localhost:6333/collections/studykb   # the index
+rm -rf .cache/state-qml-master.db .cache/work              # what has been done
+rm -rf ~/Personale/QML/vault/90-extracted                  # the text mirror
+rm -rf ~/Personale/QML/vault/00-syllabus                   # regenerated
+```
+
+Then Step 3 onwards.
+
+**Check `00-syllabus/` before deleting it.** studykb writes the top of each
+module page and keeps whatever sits under the `## Notes` heading, so that is
+where your own notes go and they do not come back. `20-thesis/` is never
+touched by anything here.
 
 ---
 
@@ -296,9 +348,10 @@ uv run studykb review --corpus test
 | `✗ <model name>` in doctor | model not downloaded | `ollama pull <name>` |
 | A file is not found by search | wrong module, or not ingested | check `MANIFEST.md`, then Step 3 |
 | Search returns nothing at all | index empty | `uv run studykb doctor` shows the chunk count |
-| `ocrmypdf not found` | running outside the container | run ingest with `docker compose run --rm studykb` |
 | Ingest seems stuck | figure captioning is slow | normal: seconds per page. Check the GPU with `nvidia-smi` |
 | A change to settings had no effect | that stage was not re-run | settings changes trigger a re-run automatically; **code changes do not** |
+| A corrected module in `MANIFEST.md` had no effect | — | it does now: that one source re-indexes on the next ingest |
+| `Unit() got an unexpected keyword argument` | you ran `--only` and older extracted files are still there | run the ingest whole |
 
 ---
 

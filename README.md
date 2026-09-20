@@ -40,10 +40,16 @@ cp .env.example .env          # set CORPUS_DIR and VAULT_DIR
 ollama pull bge-m3 qwen2.5vl:7b granite3.2-vision:2b qwen3:8b
 
 docker compose up -d qdrant
-docker compose run --rm studykb doctor
-docker compose run --rm studykb ingest --corpus qml-master --dry-run
-docker compose run --rm studykb ingest --corpus qml-master
+
+uv run studykb doctor
+uv run studykb ingest --corpus qml-master --root "$CORPUS_DIR" --dry-run
+uv run studykb ingest --corpus qml-master --root "$CORPUS_DIR"
 ```
+
+Ingest runs on the host, not in the container: the container keeps its state and
+its extracted files in its own volume, so ingesting there and reviewing here
+reports every source as "not extracted". The image exists for OCR, which is
+currently switched off.
 
 ### ollama settings
 

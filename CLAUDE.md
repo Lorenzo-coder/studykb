@@ -17,10 +17,12 @@ that in one call.
 
 ```bash
 uv run studykb doctor                              # check endpoint, models, Qdrant, paths
-uv run studykb ingest --corpus qml-master --dry-run
-uv run studykb ingest --corpus qml-master          # incremental; unchanged sources cost nothing
-uv run studykb ingest --corpus qml-master --only vision
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb --dry-run
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb
+uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb --only vision  # only after a full run
+uv run studykb review --corpus qml-master --root ~/Personale/QML/kb
 uv run studykb search "variational circuit" -m M4
+uv run studykb stats  --corpus qml-master          # what past runs cost
 uv run pytest
 ```
 
@@ -35,6 +37,7 @@ uv only. Never pip, in the shell or in the Dockerfile.
 | manual file→module overrides | `corpora/<domain>/MANIFEST.md` |
 | prompts sent to models | `prompts/*.j2` |
 | your notes, syllabus, extractions | the vault, outside this repo |
+| the material itself | `~/Personale/QML/kb/` — folder decides the type, flat, no `M<n>/` |
 
 Changing behaviour means editing config or a prompt. If a corpus-specific fact
 is about to go into `src/`, it belongs in `corpus.yaml` instead.

@@ -17,9 +17,9 @@ isn't, the answer is "unknown", not a guess from reading 300 pages.
 Markdown table rows, nothing else:
 
 ```
-| Book/Schuld - Machine Learning with Quantum Computers.pdf | M4 |  |
+| books/Schuld - Machine Learning with Quantum Computers.pdf | M7 |  |
 | slides/2026-09-19-annealing.pdf | M7 |  |
-| Bando Unico 25-26.pdf |  | false |
+| code/tutorialGrover.ipynb | M4 |  |
 ```
 
 - Column 2: a module id (`M1`–`M9`), or empty if you cannot tell.

@@ -19,7 +19,7 @@ PDF, ASR cleanup needs lecture captions.
 indexed. **Nothing has been run on it since**, on purpose.
 
 ```bash
-uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML --dry-run
+uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML/kb --dry-run
 ```
 
 | stage | pending | why |
@@ -37,8 +37,8 @@ longer has. Bumping the fingerprint rewrites those files instead.
 JSON in place and crashes on it.
 
 ```bash
-docker compose run --rm studykb ingest --corpus qml-master   # not --only
-uv run studykb review --corpus qml-master --root /home/locode/Personale/QML
+uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML/kb   # not --only
+uv run studykb review --corpus qml-master --root /home/locode/Personale/QML/kb
 ```
 
 The 3,544 chunks already in Qdrant are intact and search works meanwhile.
@@ -172,7 +172,7 @@ Three things to fix before the next ingest, found by walking the tree:
 3. `ML Notes_v1.pdf` is study material (M2) sitting in `burocracy/`.
 
 Still unplaced: the 7 notebooks and `lect5_testing.pdf` at the top of `papers/`,
-and the 9 books still in `Book/`.
+and the 9 books still in `Book/`. *(Done — see the corpus commits.)*
 
 **Get the module right before ingesting.** A module is not part of the source
 checksum or of any stage fingerprint, so correcting it in MANIFEST.md afterwards
