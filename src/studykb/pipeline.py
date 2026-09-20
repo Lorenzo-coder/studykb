@@ -227,12 +227,24 @@ _UPSTREAM: dict[str, tuple[str, ...]] = {
 }
 
 
+# Facts about one source that a stage bakes into its output, but that no config
+# fingerprint covers. Without them, correcting a MANIFEST.md entry changes
+# nothing at all: the gate still reads "already done" and the old value stays in
+# the index. That silently broke the recovery the CLI itself recommends —
+# "set type: slides in MANIFEST.md to force captioning" did not force anything.
+_PER_SOURCE: dict[str, tuple[str, ...]] = {
+    "vision": ("vision",),          # type: slides is what turns captioning on
+    "embed": ("module", "type"),    # both are written into every chunk payload
+}
+
+
 def _effective_fp(fp: dict[str, str], stage: str, src: Source, cfg: Config) -> str:
     """Fingerprint of a stage plus every upstream stage that feeds this source."""
     parts = [fp[stage]]
     for up in _UPSTREAM.get(stage, ()):
         if _stage_applies(up, src, cfg):
             parts.append(fp[up])
+    parts += [str(getattr(src, field)) for field in _PER_SOURCE.get(stage, ())]
     return "|".join(parts)
 
 

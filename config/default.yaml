@@ -32,7 +32,12 @@ storage:
 
 extract:
   ocr:
-    enabled: true
+    # Off: the only source that triggers it is a handwritten lecture, and
+    # tesseract reads printed type, not handwriting. Worse, OCR output is
+    # extracted as provenance: text-layer — the most trusted label — so a run
+    # would index its guesses as if they had been read from the file. Turn it
+    # back on the day a scan of *printed* text arrives.
+    enabled: false
     # A page under this many characters is treated as having no text layer.
     trigger_chars_per_page: 120
     cmd: ["ocrmypdf", "--language", "ita+eng", "--skip-text", "--optimize", "1"]
