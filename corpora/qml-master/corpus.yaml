@@ -56,6 +56,9 @@ sources:
   - glob: "code/**/*.py"
     type: code
     vision: never
+  - glob: "code/**/*.md"      # notes that ship beside a notebook bundle
+    type: code
+    vision: never
   - glob: "**/*.pptx"
     type: slides
   - glob: "**/*.pdf"          # anything not placed above

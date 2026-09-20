@@ -10,7 +10,7 @@ from . import asr, code, ocr, pdf, pptx, vtt, vision
 
 __all__ = ["asr", "code", "ocr", "pdf", "pptx", "vtt", "vision", "extract_units", "SUPPORTED"]
 
-SUPPORTED = {".pdf", ".pptx", ".vtt", ".srt", ".ipynb", ".py"}
+SUPPORTED = {".pdf", ".pptx", ".vtt", ".srt", ".ipynb", ".py", ".md"}
 
 
 def extract_units(path: Path, cfg: Config) -> list[Unit]:
@@ -25,4 +25,6 @@ def extract_units(path: Path, cfg: Config) -> list[Unit]:
         return code.extract_notebook(path, cfg)
     if suffix == ".py":
         return code.extract_python(path)
+    if suffix == ".md":
+        return [Unit(locator="whole file", text=path.read_text(), provenance="text-layer")]
     raise ValueError(f"no extractor for {suffix} ({path.name})")
