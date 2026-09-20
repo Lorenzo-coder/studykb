@@ -16,7 +16,7 @@ derivation. Its output is a searchable description, not a source, and
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Literal
 
 Provenance = Literal["text-layer", "ocr", "local-vlm", "asr", "asr-corrected"]
@@ -31,9 +31,8 @@ class Unit:
     heading: str = ""
     # Vision/OCR triggers need these; they are not indexed.
     char_count: int = 0
-    has_images: bool = False
     # Vector ops + bitmaps on the page. A cover has ~1, a blank page 0, a real
-    # figure page dozens. The bool alone cannot tell those apart.
+    # figure page dozens — which is why this is a count and not a flag.
     graphics: int = 0
     page_no: int | None = None
     extra: dict = field(default_factory=dict)
@@ -56,13 +55,5 @@ class Chunk:
     heading: str = ""
 
     def payload(self) -> dict:
-        return {
-            "text": self.text,
-            "source": self.source,
-            "source_title": self.source_title,
-            "type": self.type,
-            "locator": self.locator,
-            "provenance": self.provenance,
-            "module": self.module,
-            "heading": self.heading,
-        }
+        """Everything but the id, which is already the Qdrant point id."""
+        return {k: v for k, v in asdict(self).items() if k != "id"}

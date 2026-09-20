@@ -26,21 +26,12 @@ from .chunk import CHARS_PER_TOKEN
 from .config import Config, Corpus
 from .llm import LLM
 from .pipeline import Source, _chunks_for, _load_calendar, _units_file, discover
-from .state import State, file_sha
+from .state import file_sha
 
 
 # Below this a chunk is a title page or a part divider: it will never be a
 # useful hit, but it still occupies a vector.
 TINY_CHUNK = 200
-
-
-@dataclass
-class ReviewPaths:
-    root: Path
-
-    def file(self, name: str) -> Path:
-        self.root.mkdir(parents=True, exist_ok=True)
-        return self.root / name
 
 
 def _sources(cfg: Config, corpus: Corpus) -> list[Source]:
@@ -99,11 +90,13 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
     page it described, a source discovered from the wrong corpus. Each of those
     is one line here.
     """
-    from qdrant_client import models
-
-    work = cfg.storage.state_db.parent / "work"
+    work = cfg.work
     client = index.connect(cfg)
     sources = _sources(cfg, corpus)
+    try:
+        indexed_by_source = index.counts_by(client, cfg, "source", [s.rel for s in sources])
+    except Exception:  # noqa: BLE001 - collection may not exist yet
+        indexed_by_source = {}
 
     rows: list[list[str]] = []
     produced_total = 0
@@ -123,16 +116,7 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
         produced = list(_chunks_for(cfg, src, work))
         produced_total += len(produced)
         tiny_chunks += sum(1 for c in produced if len(c.text) < TINY_CHUNK)
-        try:
-            indexed = client.count(
-                cfg.storage.collection,
-                count_filter=models.Filter(
-                    must=[models.FieldCondition(key="source", match=models.MatchValue(value=src.rel))]
-                ),
-                exact=True,
-            ).count
-        except Exception:  # noqa: BLE001 - collection may not exist yet
-            indexed = 0
+        indexed = indexed_by_source.get(src.rel, 0)
         indexed_total += indexed
 
         pages_with_text = sum(1 for u in units if u["text"].strip())
@@ -180,7 +164,7 @@ def summary(cfg: Config, corpus: Corpus) -> tuple[list[list[str]], list[Check]]:
 SUMMARY_COLUMNS = ["source", "type", "mod", "pages", "ch/pg", "cap", "chunks"]
 
 
-def summary_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
+def summary_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
     rows, checks = summary(cfg, corpus)
     lines = [
         f"# Review summary — {corpus.domain}",
@@ -209,7 +193,7 @@ def summary_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
         "| does search return the right passage? | `retrieval.md` |",
         "",
     ]
-    path = out.file("SUMMARY.md")
+    path = out / "SUMMARY.md"
     path.write_text("\n".join(lines))
     return path
 
@@ -217,13 +201,13 @@ def summary_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
 # --------------------------------------------------------------------------
 # 1. Extraction
 # --------------------------------------------------------------------------
-def extraction_report(cfg: Config, corpus: Corpus, out: ReviewPaths, preview: int = 400) -> Path:
+def extraction_report(cfg: Config, corpus: Corpus, out: Path, preview: int = 400) -> Path:
     """Per page: how much text came out, and the start of it.
 
     Empty and near-empty pages are called out at the top, because a page that
     extracted to nothing is indexed as nothing and searching will never tell you.
     """
-    work = cfg.storage.state_db.parent / "work"
+    work = cfg.work
     lines = ["# Extraction review", "", "Check that nothing meaningful was dropped.", ""]
 
     for src in _sources(cfg, corpus):
@@ -253,7 +237,7 @@ def extraction_report(cfg: Config, corpus: Corpus, out: ReviewPaths, preview: in
             lines.append(f"| {unit['locator']} | {len(unit['text'].strip())} | {text.replace('|', '\\|') or '—'} |")
         lines.append("")
 
-    path = out.file("extraction.md")
+    path = out / "extraction.md"
     path.write_text("\n".join(lines))
     return path
 
@@ -261,14 +245,14 @@ def extraction_report(cfg: Config, corpus: Corpus, out: ReviewPaths, preview: in
 # --------------------------------------------------------------------------
 # 2. Captions
 # --------------------------------------------------------------------------
-def caption_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
+def caption_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
     """Each caption next to a picture of the page it describes.
 
     Open it in Obsidian and read down: the image and the claim are adjacent, so
     a hallucinated circuit is obvious in a second. Nothing here is a
     transcription — captions exist to make a figure findable.
     """
-    work = cfg.storage.state_db.parent / "work"
+    work = cfg.work
     lines = [
         "# Caption review",
         "",
@@ -285,7 +269,7 @@ def caption_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
             skipped.append(f"- `{src.rel}` — {_why_no_captions(src, cfg, work)}")
             continue
         lines += [f"## {src.rel}", "", f"{len(captions)} captions · module `{src.module or '—'}`", ""]
-        pages_dir = out.root / "pages" / _slug(src.rel)
+        pages_dir = out / "pages" / _slug(src.rel)
         pages_dir.mkdir(parents=True, exist_ok=True)
         for cap in captions:
             total += 1
@@ -293,7 +277,7 @@ def caption_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
             png = _render_for_review(src, cap, cfg, pages_dir)
             # Relative to the report, so it renders in Obsidian and in any
             # markdown viewer without an absolute path.
-            lines += [f"![{cap['locator']}]({png.relative_to(out.root).as_posix()})", ""] if png else [
+            lines += [f"![{cap['locator']}]({png.relative_to(out).as_posix()})", ""] if png else [
                 "> could not render this page", ""
             ]
             lines += [cap["text"], "", "---", ""]
@@ -305,7 +289,7 @@ def caption_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
 
     lines.insert(1, "")
     lines.insert(1, f"**{total} captions to review.**")
-    path = out.file("captions.md")
+    path = out / "captions.md"
     path.write_text("\n".join(lines))
     return path
 
@@ -328,7 +312,7 @@ def _why_no_captions(src: Source, cfg: Config, work: Path) -> str:
 # --------------------------------------------------------------------------
 # 2b. Chunks — the unit retrieval actually returns
 # --------------------------------------------------------------------------
-def chunks_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
+def chunks_report(cfg: Config, corpus: Corpus, out: Path) -> Path:
     """Show the seams, not the text.
 
     A page is not what search returns — a chunk is, and a chunk can begin and
@@ -336,7 +320,7 @@ def chunks_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
     each chunk's opening and closing words: read down the pairs and a cut
     landing mid-derivation is obvious, while a full dump of 488 chunks is not.
     """
-    work = cfg.storage.state_db.parent / "work"
+    work = cfg.work
     lines = [
         "# Chunk review",
         "",
@@ -387,7 +371,7 @@ def chunks_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
             )
         lines.append("")
 
-    path = out.file("chunks.md")
+    path = out / "chunks.md"
     path.write_text("\n".join(lines))
     return path
 
@@ -395,7 +379,7 @@ def chunks_report(cfg: Config, corpus: Corpus, out: ReviewPaths) -> Path:
 # --------------------------------------------------------------------------
 # 3. Retrieval
 # --------------------------------------------------------------------------
-def retrieval_report(cfg: Config, corpus: Corpus, out: ReviewPaths, queries_file: Path) -> Path:
+def retrieval_report(cfg: Config, corpus: Corpus, out: Path, queries_file: Path) -> Path:
     """Run a list of queries and lay the answers out for checking.
 
     A query file is a list of `{query, module?, type?, expect?}`. `expect` is a
@@ -435,28 +419,6 @@ def retrieval_report(cfg: Config, corpus: Corpus, out: ReviewPaths, queries_file
                 )
             lines.append("")
 
-    path = out.file("retrieval.md")
+    path = out / "retrieval.md"
     path.write_text("\n".join(lines))
     return path
-
-
-def inventory(cfg: Config, corpus: Corpus) -> list[tuple[str, str, str | None, int]]:
-    """What is in the corpus and how many chunks each source has indexed."""
-    from qdrant_client import models
-
-    client = index.connect(cfg)
-    rows = []
-    with State(cfg.storage.state_db):
-        for src in _sources(cfg, corpus):
-            try:
-                n = client.count(
-                    cfg.storage.collection,
-                    count_filter=models.Filter(
-                        must=[models.FieldCondition(key="source", match=models.MatchValue(value=src.rel))]
-                    ),
-                    exact=True,
-                ).count
-            except Exception:  # noqa: BLE001 - collection may not exist yet
-                n = 0
-            rows.append((src.rel, src.type, src.module, n))
-    return rows

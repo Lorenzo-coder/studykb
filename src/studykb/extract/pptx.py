@@ -34,14 +34,12 @@ def extract(path: Path) -> list[Unit]:
             if notes:
                 parts.append(f"\n[speaker notes]\n{notes}")
 
-        has_images = any(shape.shape_type == 13 for shape in slide.shapes)  # 13 = PICTURE
         units.append(
             Unit(
                 locator=f"slide {i}",
                 text="\n\n".join(parts).strip(),
                 provenance="text-layer",
                 heading=title,
-                has_images=has_images,
                 page_no=i,
             )
         )

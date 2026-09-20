@@ -5,7 +5,6 @@ description = "Config-driven knowledge base for study corpora: ingest, index and
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.9",
-    "pydantic-settings>=2.6",
     "pyyaml>=6.0",
     "typer>=0.15",
     "httpx>=0.28",

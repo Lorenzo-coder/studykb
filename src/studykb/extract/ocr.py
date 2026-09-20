@@ -20,10 +20,6 @@ from ..config import Config
 from .pdf import text_layer_stats
 
 
-class OcrUnavailable(RuntimeError):
-    pass
-
-
 def needs_ocr(path: Path, cfg: Config) -> bool:
     if not cfg.extract.ocr.enabled or path.suffix.lower() != ".pdf":
         return False
@@ -34,7 +30,7 @@ def needs_ocr(path: Path, cfg: Config) -> bool:
 def run_ocr(path: Path, out: Path, cfg: Config) -> Path:
     """Write an OCR'd copy of `path` to `out`. Raises rather than indexing nothing."""
     if shutil.which(cfg.extract.ocr.cmd[0]) is None:
-        raise OcrUnavailable(
+        raise RuntimeError(
             f"{cfg.extract.ocr.cmd[0]} not found. It ships in the studykb image; "
             f"outside the container install it or set extract.ocr.enabled: false."
         )

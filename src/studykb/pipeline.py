@@ -23,10 +23,9 @@ from pathlib import Path
 
 from . import calendar as cal
 from . import chunk as chunking
-from . import extract, index
+from . import extract, index, prompts
 from .config import Config, Corpus
 from .llm import LLM
-from .prompts import Prompts
 from .state import State, file_sha
 from .types import Unit
 
@@ -115,7 +114,7 @@ def _excluded(rel: str, patterns: list[str]) -> bool:
 
 def _module_for(rel: str, corpus: Corpus, by_date: dict[str, str]) -> str | None:
     for rule in corpus.module_rules:
-        if rule.match != "path_regex" or not rule.pattern:
+        if not rule.pattern:
             continue
         match = re.search(rule.pattern, "/" + rel)
         if not match:
@@ -163,12 +162,11 @@ def ingest(
     log=print,
 ) -> Report:
     report = Report()
-    prompts = Prompts()
     modules = _load_calendar(cfg, corpus, log)
     sources, unassigned = discover(corpus, modules)
     report.unassigned = unassigned
     fp = cfg.fingerprint(prompts.version())
-    work = cfg.storage.state_db.parent / "work"
+    work = cfg.work
 
     if dry_run:
         log(f"{len(sources)} sources under {corpus.root}")
@@ -203,9 +201,9 @@ def ingest(
         if _wanted("extract", only):
             _stage_extract(cfg, sources, st, fp, work, report, log)
         if _wanted("asr_cleanup", only):
-            _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, prompts, report, log)
+            _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, report, log)
         if _wanted("vision", only):
-            _stage_vision(cfg, sources, st, fp, work, llm, prompts, report, log)
+            _stage_vision(cfg, sources, st, fp, work, llm, report, log)
         if _wanted("embed", only):
             _stage_embed(cfg, sources, st, fp, work, llm, report, log)
 
@@ -325,7 +323,7 @@ def _write_extracted_markdown(cfg: Config, src: Source, units: list[Unit]) -> No
 
 
 # -- stage 3: ASR cleanup --------------------------------------------------
-def _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, prompts, report, log) -> None:
+def _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, report, log) -> None:
     todo = [
         s for s in sources
         if _stage_applies("asr_cleanup", s, cfg) and st.needs(s.rel, "asr_cleanup", s.sha, _effective_fp(fp, "asr_cleanup", s, cfg))
@@ -351,7 +349,7 @@ def _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, prompts, report
 
 
 # -- stage 4: vision -------------------------------------------------------
-def _stage_vision(cfg, sources, st, fp, work, llm, prompts, report, log) -> None:
+def _stage_vision(cfg, sources, st, fp, work, llm, report, log) -> None:
     todo = [
         s for s in sources
         if _stage_applies("vision", s, cfg) and st.needs(s.rel, "vision", s.sha, _effective_fp(fp, "vision", s, cfg))

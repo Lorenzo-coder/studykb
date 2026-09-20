@@ -46,7 +46,6 @@ extract:
     # the model will invent something rather than say so.
     min_graphics: 12
     render_dpi: 150
-    timeout_s: 180
 
 transcript:
   window_seconds: 300
@@ -65,4 +64,3 @@ retrieval:
   k_dense: 30
   k_lexical: 30
   k_final: 8
-  rrf_k: 60

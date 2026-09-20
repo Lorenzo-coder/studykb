@@ -4,7 +4,6 @@
 
 domain: "qml-master"
 title: "Master in Quantum Machine Learning for Finance and Industry — Ca' Foscari"
-language: "en"
 
 # Sources live outside the repo and are never committed. Mounted at /corpus.
 root: "/corpus"
@@ -87,7 +86,6 @@ module_rules:
   - match: "path_regex"
     pattern: "(?P<date>20\\d{2}-\\d{2}-\\d{2})"
     resolve: "calendar_date"   # lecture date -> module, via the timetable
-  - match: "manifest"
 
 # Fed to the ASR-cleanup prompt on top of the calendar-derived glossary (lecture
 # titles and teacher names). Add whatever the captions keep mangling.

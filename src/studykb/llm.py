@@ -12,7 +12,6 @@ previous model before the next stage loads its own.
 from __future__ import annotations
 
 import base64
-import json
 from pathlib import Path
 
 import httpx
@@ -119,24 +118,6 @@ class LLM:
         r = self.client.get("/models")
         r.raise_for_status()
         return {m["id"] for m in r.json().get("data", [])}
-
-
-def parse_json_response(text: str) -> object:
-    """Pull JSON out of a local model's answer.
-
-    Small models wrap JSON in prose or fences however they feel, and qwen3 emits
-    <think> blocks. Strip all of it before parsing.
-    """
-    if "</think>" in text:
-        text = text.rsplit("</think>", 1)[1]
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1].rsplit("```", 1)[0]
-    start = min((i for i in (text.find("{"), text.find("[")) if i != -1), default=-1)
-    if start == -1:
-        raise ValueError(f"no JSON in model response: {text[:200]!r}")
-    end = max(text.rfind("}"), text.rfind("]"))
-    return json.loads(text[start : end + 1])
 
 
 def strip_thinking(text: str) -> str:

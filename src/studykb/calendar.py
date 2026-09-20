@@ -26,6 +26,10 @@ _BREAK = re.compile(r"(?i)\b(break|holiday|vacanz)")
 _ASSESSMENT = re.compile(r"(?i)(assessment[^|]*)")
 _ASSESSED_MODULES = re.compile(r"(?i)modules?\s+([\d,\s]*\d)(?:\s+and\s+(\d+))?")
 
+# Column layout of the timetable as shipped, used when the header row does not
+# name a field. Read-only.
+_POSITIONAL = {"date": 0, "day": 1, "time": 2, "mode": 5, "module": 6, "topic": 7, "teacher": 8, "institution": 9}
+
 
 @dataclass
 class Lecture:
@@ -214,13 +218,9 @@ def _find_header(rows: list[list], cfg: CalendarCfg) -> tuple[int, dict[str, int
             if target in cells:
                 col[field] = cells.index(target)
         if "date" in col or wanted == {}:
-            return i, col or _positional()
-        return i, {**_positional(), **col}
-    return 0, _positional()
-
-
-def _positional() -> dict[str, int]:
-    return {"date": 0, "day": 1, "time": 2, "mode": 5, "module": 6, "topic": 7, "teacher": 8, "institution": 9}
+            return i, col or _POSITIONAL
+        return i, {**_POSITIONAL, **col}
+    return 0, _POSITIONAL
 
 
 def to_markdown(modules: list[Module]) -> dict[str, str]:

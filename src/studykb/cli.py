@@ -15,10 +15,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from . import index, pipeline, search as search_mod
+from . import index, pipeline, prompts, search as search_mod
 from .config import load_config, load_corpus
 from .llm import LLM
-from .prompts import Prompts
 
 app = typer.Typer(add_completion=False, help="Config-driven knowledge base for study corpora.")
 console = Console()
@@ -102,7 +101,7 @@ def doctor(config: Path = typer.Option(None, "--config")) -> None:
         console.print(f"{'[green]✓[/]' if writable else '[red]✗[/]'} {label}: {path}")
         ok &= writable
 
-    console.print(f"[green]✓[/] prompts: {len(list(Prompts().dir.glob('*.j2')))} templates")
+    console.print(f"[green]✓[/] prompts: {len(list(prompts.PROMPT_DIR.glob('*.j2')))} templates")
     raise typer.Exit(0 if ok else 1)
 
 
@@ -198,7 +197,8 @@ def review(
     cfg, corp = _load(corpus, config, root)
     # Inside the vault, so Obsidian renders them — captions.md is only useful
     # when the page images next to it actually display.
-    paths = review_mod.ReviewPaths(out or cfg.storage.vault / "95-review")
+    paths = out or cfg.storage.vault / "95-review"
+    paths.mkdir(parents=True, exist_ok=True)
     wanted = set(what) if what else {"summary", "extraction", "chunks", "captions", "retrieval"}
 
     if "summary" in wanted:

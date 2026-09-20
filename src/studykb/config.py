@@ -70,7 +70,6 @@ class VisionCfg(BaseModel):
     trigger_chars_per_page: int = 250
     min_graphics: int = 12
     render_dpi: int = 150
-    timeout_s: int = 180
 
 
 class ExtractCfg(BaseModel):
@@ -94,7 +93,6 @@ class RetrievalCfg(BaseModel):
     k_dense: int = 30
     k_lexical: int = 30
     k_final: int = 8
-    rrf_k: int = 60
 
 
 class Config(BaseModel):
@@ -106,6 +104,11 @@ class Config(BaseModel):
     transcript: TranscriptCfg
     chunk: ChunkCfg
     retrieval: RetrievalCfg
+
+    @property
+    def work(self) -> Path:
+        """Per-stage scratch output, beside the state db so the two move together."""
+        return self.storage.state_db.parent / "work"
 
     def fingerprint(self, prompt_version: str = "") -> dict[str, str]:
         """Per-stage fingerprints over everything that stage consumes.
@@ -121,7 +124,8 @@ class Config(BaseModel):
             # not. Bump these when the extraction or OCR *logic* changes, or the
             # next run will happily keep last week's wrong output.
             "ocr": _hash_obj({"cfg": self.extract.ocr, "code": "v2"}),
-            "extract": "v3",
+            # v4: Unit lost `has_images`, so units written by v3 no longer load.
+            "extract": "v4",
             "asr_cleanup": _hash_obj(
                 {
                     "on": self.transcript.asr_cleanup,
@@ -165,7 +169,7 @@ class SourceRule(BaseModel):
 
 
 class ModuleRule(BaseModel):
-    match: Literal["path_regex", "manifest"]
+    match: Literal["path_regex"]
     pattern: str | None = None
     resolve: Literal["direct", "calendar_date"] = "direct"
 
@@ -173,7 +177,6 @@ class ModuleRule(BaseModel):
 class Corpus(BaseModel):
     domain: str
     title: str = ""
-    language: str = "en"
     root: Path
     # Override storage.collection and storage.vault. A test corpus must write
     # its index and its extractions somewhere the real ones cannot be damaged

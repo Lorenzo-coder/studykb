@@ -6,7 +6,6 @@
 
 domain: "test"
 title: "studykb review set"
-language: "en"
 root: "/home/locode/Personale/QML/test-corpus"
 collection: "studykb_test"
 # Extractions and syllabus land here, not in the study vault.
@@ -29,11 +28,9 @@ sources:
     type: paper
     vision: never
 
-# No calendar here: module assignment on the test set is done by hand in
-# MANIFEST.md, so a parsing problem in the timetable cannot be mistaken for a
-# problem in extraction.
-module_rules:
-  - match: "manifest"
+# No calendar here, and no module_rules: assignment on the test set is done by
+# hand in MANIFEST.md, so a parsing problem in the timetable cannot be mistaken
+# for a problem in extraction.
 
 glossary:
   - "qubit"

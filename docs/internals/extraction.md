@@ -61,7 +61,8 @@ explains what the number is used for.
 One unit per slide. **Speaker notes are included**: in lecture decks they often
 carry the sentence the slide only gestures at.
 
-`shape.shape_type == 13` is a picture, which feeds `has_images`.
+No graphics count here: captioning only handles PDFs, so a slide's pictures are
+never counted.
 
 ## Captions — `vtt.py`
 
