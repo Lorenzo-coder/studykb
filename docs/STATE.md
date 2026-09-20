@@ -1,6 +1,6 @@
 # Where this is right now
 
-Last updated: 2026-09-20. Read this first when resuming.
+Last updated: 2026-09-20 (second pass). Read this first when resuming.
 
 > **Next session — agreed, ready to start.** Jump to [Next session](#next-session).
 
@@ -26,7 +26,7 @@ uv run studykb ingest --corpus qml-master --root /home/locode/Personale/QML --dr
 |---|---|---|
 | `extract` | all 15 | the extract fingerprint is now the constant `v4`, so no source matches — see below |
 | `vision` / `embed` | all | they gate on extract through `_UPSTREAM`, so they follow it |
-| `ocr` | 1 | `FCaruso` now correctly detected — **needs the container**, ocrmypdf is not on the host |
+| `ocr` | 0 | **switch it off** — the one file that triggered it is handwriting, see below |
 
 `extract` went to `v4` when `Unit.has_images` was deleted: the field was written
 by both extractors and read by nobody, but units JSON written by `v3` still
@@ -45,14 +45,43 @@ The 3,544 chunks already in Qdrant are intact and search works meanwhile.
 Re-running costs about 15 minutes and fixes the 10 slide pages whose text a
 caption overwrote.
 
+## FCaruso: handwriting, not a scan
+
+`FCaruso_From Quantum Computing to Quantum AI_2026.pdf` is 137 pages with **zero
+characters of text**, which is why the OCR trigger fires on it. It is not a scan.
+It is a lecture written by hand on a tablet: 48-370 vector strokes per page,
+median 167.
+
+**ocrmypdf cannot read it and must not be run on it.** tesseract is trained on
+printed type; handwriting is a different task it was never built for. Worse, OCR
+output is extracted as `provenance: text-layer` — the most trusted label — so a
+run would index tesseract's guesses as if they had been read from the file.
+
+The vision model handles it. Measured on this machine with `qwen2.5vl:7b`:
+
+| page | result |
+|---|---|
+| p30 — formulas only, no words | `"Blank page."` — total failure |
+| p75 — words, colour, boxes | title, keywords and the claim, all correct |
+| 8 pages sampled across the deck | 8/8 produced usable content |
+
+One failure in ten pages tried. 1.8 s per page, so ~4 minutes for all 137.
+
+The limit is exactly the one `provenance: local-vlm` already states: it reads the
+**words**, it gets the **formulas wrong**. On p75 it emitted `O(W) → O(W)` where
+the page says `O(N) → O(√N)`. Good for finding the page, never for quoting it.
+
+Without this stage those 137 pages are invisible to search. Keep `type: slides`
+in MANIFEST.md, which forces captioning regardless of any other threshold.
+
 ## Blocked on material, not code
 
 | what | needed for | where to get it |
 |---|---|---|
 | lecture captions (`.vtt`/`.srt`) | transcripts, ASR cleanup, timestamped citations | university platform — captions menu in Panopto, `.vtt` in devtools for Moodle/Kaltura, transcript export in Teams |
-| slides for modules 5, 6, 7 | those modules have no material at all | ask the teachers while the contact is warm; M7 ended 26 Sep |
-| module 8 reading list | **M8 has zero chunks** and it is the 8-CFU module | Corazza teaches the first lecture, 12 Oct |
-| one scanned PDF | exercising the OCR path even once | anything image-only |
+| slides for M5, M6, M7 | M5 and M7 have papers and books, but no slides at all; M6 has nothing | ask the teachers while the contact is warm; M7 ended 26 Sep |
+| material for M1, M6, M8 | those three are the real gaps: **zero sources each**, and M8 is the 8-CFU module | Corazza teaches the first lecture, 12 Oct |
+| one scanned PDF of **printed** text | exercising the OCR path even once | anything image-only — handwriting does not count, tesseract cannot read it |
 
 ## Decisions already made
 
@@ -66,6 +95,26 @@ caption overwrote.
 | Vision | slides only; measured net-negative on prose |
 | Models | local first: bge-m3, qwen2.5vl:7b, granite3.2-vision:2b, qwen3:8b |
 | Where a number lives | three places, by what it changes — see below |
+
+## One state file per machine, and there are two of them
+
+The file that records what has already been processed lives in a different place
+depending on how the command is launched:
+
+| launched as | state | extractions |
+|---|---|---|
+| `uv run studykb ...` | `.cache/state-<domain>.db` | `.cache/work/` |
+| `docker compose run ...` | the `studykb_state` volume | the same volume |
+
+Everything so far was run from the host; the container volume is **empty**.
+
+They are not interchangeable. `studykb review` reads the extracted units from
+`cfg.work`, so ingesting in the container and reviewing on the host reports every
+source as "not extracted" — two directories, not a bug.
+
+**Stay on the host.** The only thing the container was needed for was ocrmypdf,
+and the file that wanted it turned out to be handwriting, which ocrmypdf cannot
+read anyway.
 
 ## Where to change a number
 
@@ -81,6 +130,49 @@ of three places, chosen by what changing it does:
 The last section of `limits.py` is fenced off: `FINGERPRINT_CHARS`,
 `WORK_SHA_CHARS`, `WORK_STEM_CHARS` are key lengths already written into
 `state.db` and into filenames. Changing one reruns every stage of every source.
+
+## Corpus restructure, in progress
+
+The corpus root is being reorganised into `<type>/M<n>/`, which lets the
+`path_regex` rule assign the module and empties most of MANIFEST.md.
+
+Three things to fix before the next ingest, found by walking the tree:
+
+1. `Calendario_MasterQML_2526.xlsx` was moved into `burocracy/`. `corpus.yaml`
+   looks for it at the root, so **there is currently no calendar**: no modules,
+   no teachers, no syllabus pages, no glossary, and the date-based module rule
+   silently stops resolving. It is not paperwork — it is the only syllabus this
+   master has. Move it back.
+2. `burocracy/` is not in `exclude`, and the per-filename patterns (`Bando *.pdf`
+   and friends) anchor at the start of the path, so they no longer match now that
+   the files moved into a folder. The catch-all `**/*.pdf` would index every
+   invoice and enrolment form as a paper. Add `burocracy/**` and delete the
+   twelve filename patterns it replaces.
+3. `ML Notes_v1.pdf` is study material (M2) sitting in `burocracy/`.
+
+Still unplaced: the 7 notebooks and `lect5_testing.pdf` at the top of `papers/`,
+and the 9 books still in `Book/`.
+
+**Get the module right before ingesting.** A module is not part of the source
+checksum or of any stage fingerprint, so correcting it in MANIFEST.md afterwards
+does **not** trigger a re-index — the old module stays in the payload. Moving the
+file instead makes a second source under the new path while the old chunks stay.
+Either way the fix is `studykb forget <path>` and then re-ingest. Before the
+first ingest it costs nothing.
+
+## Notebooks and Python files
+
+`.ipynb` and `.py` are not in `extract.SUPPORTED`, so they are skipped in silence
+— no error, no line in the report.
+
+The 7 notebooks under `papers/` are tutorials (PennyLane, Deutsch-Jozsa, Grover,
+QGAN, Qiskit). Their markdown cells are prose worth indexing, and a notebook is
+JSON, so an extractor is ~20 lines of stdlib with no new dependency: markdown
+cells only, `cell N` as the locator, outputs discarded. **Not built yet.**
+
+The 9 files under `pyhtonTest/src/` are the thesis code and should stay out: code
+is found with grep rather than by vector similarity, it is already open in the
+editor, and an index of it goes stale on every edit.
 
 ## Open, not decided
 
