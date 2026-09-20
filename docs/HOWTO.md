@@ -74,7 +74,7 @@ decides the type**, and the type decides whether figures get described:
 | `papers/` | papers, lecture notes, exercises | no |
 | `slides/` | lecture decks, handwritten lectures (PDF or PowerPoint) | **yes** |
 | `code/` | notebooks (`.ipynb`), scripts (`.py`), notes (`.md`) | no |
-| `transcripts/` | lecture subtitles (`.vtt` or `.srt`) | no |
+| `transcripts/` | lecture subtitles (`.vtt`, `.srt`) or the platform's Word exports (`.docx`, `.docm`) | no |
 
 Getting this wrong costs something real: a deck dropped anywhere else is typed
 `paper`, and on a deck roughly 40% of the content lives in diagrams that only a

@@ -76,6 +76,31 @@ for no extra information.
 Both `.vtt` and `.srt` are handled; `_seconds` accepts `,` or `.` as the decimal
 separator because SRT uses one and WebVTT the other.
 
+## Word transcripts — `docx.py`
+
+The platform exports its recordings as Word, not as captions, so `.docx` and
+`.docm` land here. A Word file is a zip with its text in `word/document.xml`:
+`zipfile` plus `ElementTree` read it, no dependency. Runs join with no
+separator, because Word splits a word across runs wherever formatting changes.
+
+The speaker line — `[Calogero Zarbo] 14:05:04`, alone on its paragraph — sets
+the window and the locator, exactly as a caption timestamp does. The name stays
+in the text. The pattern is anchored at both ends: running speech says "it's
+9:05" and that is not a mark.
+
+Two things the caption path never had to handle:
+
+- **Cleaned transcripts with no marks at all.** Four of the thirty files on the
+  study corpus are continuous prose. They fall back to a paragraph range,
+  `¶12-38`.
+- **Marks that are not evenly spread.** One file carries all its timestamps in
+  the last twenty minutes. Everything before the first one belongs to a single
+  window, and a transcript window is never split downstream — so that window
+  would be one 100k-character chunk. A window past
+  `chunk.target_tokens` is cut on a word boundary and the pieces after the first
+  are labelled `@09:08:29 (2)`, which keeps every locator unique and says
+  plainly that the time is where the window opened, not where the piece starts.
+
 ## OCR — `ocr.py`
 
 Runs only when `needs_ocr` says so:

@@ -31,6 +31,12 @@ sources:
     type: transcript
   - glob: "transcripts/**/*.srt"
     type: transcript
+  # The platform exports its recordings as Word, not as captions. Same content,
+  # same timestamps, a different container.
+  - glob: "transcripts/**/*.docx"
+    type: transcript
+  - glob: "transcripts/**/*.docm"
+    type: transcript
   - glob: "slides/**/*.pdf"
     type: slides
     vision: force             # slides carry meaning in figures; always caption

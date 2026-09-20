@@ -6,11 +6,11 @@ from pathlib import Path
 
 from ..config import Config
 from ..types import Unit
-from . import asr, code, ocr, pdf, pptx, vtt, vision
+from . import asr, code, docx, ocr, pdf, pptx, vtt, vision
 
-__all__ = ["asr", "code", "ocr", "pdf", "pptx", "vtt", "vision", "extract_units", "SUPPORTED"]
+__all__ = ["asr", "code", "docx", "ocr", "pdf", "pptx", "vtt", "vision", "extract_units", "SUPPORTED"]
 
-SUPPORTED = {".pdf", ".pptx", ".vtt", ".srt", ".ipynb", ".py", ".md"}
+SUPPORTED = {".pdf", ".pptx", ".vtt", ".srt", ".docx", ".docm", ".ipynb", ".py", ".md"}
 
 
 def extract_units(path: Path, cfg: Config) -> list[Unit]:
@@ -21,6 +21,8 @@ def extract_units(path: Path, cfg: Config) -> list[Unit]:
         return pptx.extract(path)
     if suffix in (".vtt", ".srt"):
         return vtt.extract(path, cfg)
+    if suffix in (".docx", ".docm"):
+        return docx.extract(path, cfg)
     if suffix == ".ipynb":
         return code.extract_notebook(path, cfg)
     if suffix == ".py":

@@ -19,7 +19,7 @@ import pytest
 
 from studykb.chunk import to_chunks
 from studykb.config import CalendarCfg, ChunkCfg, load_config
-from studykb.extract import pdf, vtt
+from studykb.extract import docx, pdf, vtt
 from studykb.state import State, chunk_id
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -54,6 +54,63 @@ def test_transcript_windows_keep_their_start_time(cfg):
     # multiply the token count for no extra information.
     assert units[0].text.count("Welcome to the lecture") == 1
     assert all(u.provenance == "asr" for u in units)
+
+
+def _docx(path: Path, paragraphs: list[str]) -> Path:
+    """The smallest file python-docx-free extraction has to cope with."""
+    import zipfile
+
+    w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    body = "".join(f"<w:p><w:r><w:t>{p}</w:t></w:r></w:p>" for p in paragraphs)
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("word/document.xml", f'<w:document xmlns:w="{w}"><w:body>{body}</w:body></w:document>')
+    return path
+
+
+def test_word_transcript_windows_start_at_the_speaker_mark(tmp_path, cfg):
+    path = _docx(
+        tmp_path / "lecture.docm",
+        ["[Calogero Zarbo] 09:08:29", "Last time we talked about a specific use case.",
+         "09:10:04", "It is a use case, so we cannot reproduce it.",
+         "[Samuele Medici] 09:20:50", "It was this paper I was looking for."],
+    )
+    units = docx.extract(path, cfg)
+    # 09:08:29 -> 09:10:04 is under the 300 s window, so those two stay together;
+    # 09:20:50 is past it and opens the next one.
+    assert [u.locator for u in units] == ["@09:08:29", "@09:20:50"]
+    assert all(u.provenance == "asr" for u in units)
+    # Who said it is part of what it is worth, so the name stays in the text.
+    assert "[Samuele Medici]" in units[1].text
+
+
+def test_a_cleaned_word_transcript_falls_back_to_paragraph_ranges(tmp_path, cfg):
+    # Four of the thirty real files have every mark stripped out. Without a
+    # bound they would arrive as one unit, and a transcript unit is never split
+    # downstream — one unsearchable chunk for a three-hour lecture.
+    budget = cfg.chunk.target_tokens * 4
+    path = _docx(tmp_path / "cleaned.docx", ["word " * 200] * 10)
+    units = docx.extract(path, cfg)
+    assert len(units) > 1
+    assert units[0].locator.startswith("¶")
+    assert all(len(u.text) < budget * 2 for u in units)
+
+
+def test_an_unbroken_wall_of_text_still_terminates(tmp_path, cfg):
+    # No space to break on anywhere: the cut has to fall back to the budget
+    # rather than walk backwards one character at a time.
+    path = _docx(tmp_path / "wall.docx", ["x" * 20_000])
+    units = docx.extract(path, cfg)
+    assert len(units) == 7
+    assert sum(len(u.text) for u in units) == 20_000
+
+
+def test_a_time_in_running_speech_is_not_a_mark(tmp_path, cfg):
+    path = _docx(
+        tmp_path / "spoken.docm",
+        ["[Stefano Martina] 09:05:00", "It is 9:05 now, and the run took 01:02:03 to finish."],
+    )
+    units = docx.extract(path, cfg)
+    assert [u.locator for u in units] == ["@09:05:00"]
 
 
 def test_chunking_does_not_split_a_transcript_window(cfg):

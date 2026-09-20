@@ -140,6 +140,54 @@ source.
 | slides/whiteboard1.pdf | M4 |  |  |
 | slides/whiteboard3.pdf | M4 |  |  |
 | slides/whiteboard4.pdf | M5 |  |  |
+| transcripts/BARNES_02 PRIVACY and DATA PROTECTION (Pomeriggio).docm | M1 |  |  |
+| transcripts/CARUSO 05 TRASCRIZIONE Ripulita Q algo C data encoding QML bis.docx | M4 |  |  |
+| transcripts/CRIPPA_01-02 Impl-APP with IBM QISKIT Framework.docm | M6 |  |  |
+| transcripts/CRIPPA_03_Impl-APP with IBM Qiskit Framework continue.docm | M6 |  |  |
+| transcripts/CRIPPA_04_Impl-APP with IBM Qiskit Framework POMERIGGIO.docm | M6 |  |  |
+| transcripts/MARTINA 01 QC BASICs 20260516 mattina.docm | M4 |  |  |
+| transcripts/MARTINA 02 QC BASICs 20260516 POMERIGGIO.docm | M4 |  |  |
+| transcripts/MARTINA 03 PRACTICE on Q CIRCUITs mattina.docm | M4 |  |  |
+| transcripts/MARTINA 04 PRACTICE on Q CIRCUITs AFTERNOON.docm | M4 |  |  |
+| transcripts/MARTINA 05 TRASCRIZIONE Ripulita.docm | M4 |  |  |
+| transcripts/MARTINA 06 Cleaned TRANSCRIPTION Sudoku Practice GEN AI.docm | M4 |  |  |
+| transcripts/MARTINA 07 Clean TRANSCRIPTION QAE QVAE GAN QGAN GDM.docm | M4 |  |  |
+| transcripts/MARTINA 08 Clean TRANSCRIPTION QML Mod - Pennilane QQ Ex.docm | M5 |  |  |
+| transcripts/MARTINA 08-9 Clean TRANSCRIPTION QML Mod - PennyL QQ Ex (ALL DAY).docm | M5 |  |  |
+| transcripts/MARTINA_10  Quanvolutional NN Workgroup.docm | M5 |  |  |
+| transcripts/MARTINA_11  Quanvolutional NN Workgroup POMERIGGIO.docm | M5 |  |  |
+| transcripts/ONORATI_01_NOISE Correction and Mitigation.docm | M6 |  |  |
+| transcripts/ONORATI_02_NOISE Correction and Mitigation POMERIGGIO.docm | M6 |  |  |
+| transcripts/Useful links.docx |  |  | false |
+| transcripts/ZARBO_01_QMDL_ALGOrithms and examples (mattina).docm | M7 |  |  |
+| transcripts/ZARBO_02_QMDL_ALGOrithms and examples (fine POMERIGGIO dalle 16 21).docm | M7 |  |  |
+| transcripts/ZARBO_03.docm | M7 |  |  |
+| transcripts/ZARBO_04.docm | M7 |  |  |
+| transcripts/ZARBO_05.docm | M7 |  |  |
+| transcripts/ZARBO_06 Afternoon.docm | M7 |  |  |
+| transcripts/ZARBO_07.docm | M7 |  |  |
+| transcripts/ZARBO_08.docm | M7 |  |  |
+| transcripts/ZARBO_09.docm | M7 |  |  |
+| transcripts/ZARBO_10.docm | M7 |  |  |
+## The transcripts carry no module in their path
+
+Thirty Word exports, named after the lecturer and nothing else, so neither
+module rule fires: there is no `M<n>` in the path and no date either. They are
+placed here by the same evidence the decks were — **the timetable says which
+module each lecturer teaches**. Caruso and Onorati, Crippa, Zarbo and Bernes
+each teach one module, so those are settled by the name alone.
+
+Martina teaches two, M4 and M5, so his eleven files are split by what they are
+about, against his lecture dates: QC basics and circuit practice (16 and 23 May)
+and the generative-AI lectures (5-6 June) are M4; the PennyLane tutorial
+(13 June) and the quanvolutional workgroup (20 June) are M5. That is the same
+split already applied to `whiteboard3` (M4) and `whiteboard4` (M5).
+
+`Useful links.docx` is disabled: 193 characters of text and a pile of embedded
+screenshots — a bookmark list, not a lecture. Same reason as `code/README.md`.
+The two `LINKs` files beside it are `.txt`, which is not extracted, so they need
+no line here.
+
 ## How these were classified
 
 Not by filename. Every one was settled against evidence, in this order:

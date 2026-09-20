@@ -92,15 +92,18 @@ asserts the text comes back. Until that exists, the manual gate is: put a
 scanned PDF in the test corpus, run ingest **in the container**, and confirm
 SUMMARY shows chunks for it with `provenance: ocr`.
 
-### 2.4 Lecture transcripts ⬜
+### 2.4 Lecture transcripts 🟡
 
-The captions themselves. The extractor is written and tested against a fixture;
-what is missing is the material — the `.vtt` files have never been downloaded
-from the university platform.
+Two extractors, both tested against fixtures: `vtt.py` for caption files and
+`docx.py` for the Word exports the platform actually produces. 30 Word
+transcripts are now in the corpus and extract to 1,147 units, none over the
+chunk budget and every locator unique — but they have never been **ingested**,
+so nothing has been embedded or retrieved from them yet. No `.vtt` has ever
+arrived.
 
-**Gate**: drop one real `.vtt` into `test-corpus/transcripts/`, ingest, then
-`review --what chunks` and confirm the locators read `@HH:MM:SS` and that
-opening one of those timestamps in the recording lands on the topic (±1 min).
+**Gate**: ingest, then `review --what chunks` and confirm the locators read
+`@HH:MM:SS` and that opening one of those timestamps in the recording lands on
+the topic (±1 min).
 
 ---
 
