@@ -40,6 +40,13 @@ editing a line, and a corrected module now re-indexes that one source.
 | slides/Master_QUANTUM_MACHINE_LEARNING-CORAZZA-Preliminaries-Slides.pdf | M1 |  |  |
 | slides/deep-learning.pptx | M2 |  |  |
 | slides/lect5_testing.pdf | M1 |  |  |
+| code/tutorialDJ.ipynb | M4 |  |  |
+| code/tutorialGrover.ipynb | M4 |  |  |
+| code/tutorialGroverSudoku.ipynb | M4 |  |  |
+| code/qiskitTutorial final version.ipynb | M4 |  |  |
+| code/tutorialPennylane.ipynb | M5 |  |  |
+| code/tutorialQGANHybrid.ipynb | M5 |  |  |
+| code/tutorialQGANQuantum.ipynb | M5 |  |  |
 ## Notes on the disabled entries
 
 Landau & Lifshitz is out of scale for a 24-hour introductory module: 1,144 pages
@@ -47,12 +54,23 @@ of graduate theory against a course that needs the formalism, not the full
 treatment. Flip `enabled` to `true` if that changes — it is one word, and the
 next ingest picks the book up.
 
-## Not indexed yet
+## The notebooks, and why they are `code`
 
-The seven `.ipynb` tutorials under `papers/` (PennyLane, Deutsch-Jozsa, Grover,
-Grover-Sudoku, QGAN ×2, Qiskit). `.ipynb` is not in `extract.SUPPORTED`, so they
-are skipped in silence. Their markdown cells are prose worth indexing and an
-extractor is ~20 lines of stdlib, but it does not exist yet.
+They were going to be indexed for their markdown cells. Measured, the seven hold
+**846 characters of markdown against 22,000 of Python**, and two have no markdown
+at all. There is no prose in them: they are code, so they are typed as code and
+live under `code/`, where a search can ask for them or exclude them.
+
+Classified from their imports and cell titles against what the timetable says:
+
+| notebook | module | evidence |
+|---|---|---|
+| `tutorialDJ` | M4 | Deutsch, Deutsch-Jozsa, quantum parallelism — M4 is "Basics of Quantum Computing" |
+| `tutorialGrover` | M4 | oracle, multi-controlled Z, optimal iterations |
+| `tutorialGroverSudoku` | M4 | the FCaruso M4 deck carries "Grover application to Sudoku" on p.105 |
+| `qiskitTutorial final version` | M4 | observables, sampler, state initialisation: circuit practice. **Arguable** — M6 is titled "Implementation with IBM Qiskit Framework", but M6 is about real hardware and noise |
+| `tutorialPennylane` | M5 | pennylane + torch, "optimization of parameters", "hybrid model" — M5 is "Practice on QML" |
+| `tutorialQGANHybrid`, `tutorialQGANQuantum` | M5 | QGANs — M5 is "Tutorial on Quantum Generative AI" |
 
 ## Classifications checked against the timetable
 

@@ -12,6 +12,7 @@ goes wrong:
 from __future__ import annotations
 
 import datetime as dt
+import json
 from pathlib import Path
 
 import pytest
@@ -273,3 +274,63 @@ def test_a_caption_does_not_overwrite_the_page_it_describes(cfg):
     caps = to_chunks([caption], source="d.pdf", source_title="d", type_="caption", module="M4", cfg=cfg.chunk)
 
     assert body[0].id != caps[0].id
+
+
+# -- 5. code: notebooks and scripts ----------------------------------------
+def test_notebook_cells_are_grouped_not_one_chunk_each(tmp_path, cfg):
+    """53 cells of three lines each must not become 53 fragments.
+
+    One chunk per cell is the obvious implementation and it floods the index
+    with pieces too small to answer anything.
+    """
+    from studykb.extract import code
+
+    nb = {"cells": [{"cell_type": "code", "source": [f"x = {i:03d}\n"]} for i in range(60)]}
+    nb["cells"][0] = {"cell_type": "markdown", "source": ["# Title\n"]}
+    nb["cells"].append({"cell_type": "code", "source": []})  # empty cells are dropped
+    path = tmp_path / "t.ipynb"
+    path.write_text(json.dumps(nb))
+
+    units = code.extract_notebook(path, cfg)
+    assert len(units) < 10, f"{len(units)} units from 61 small cells — not grouped"
+    assert units[0].locator.startswith("cell"), units[0].locator
+    assert "# Title" in units[0].text
+    assert "```python" in units[0].text, "code cells must be fenced"
+    # Every non-empty cell survives somewhere, and nothing is duplicated.
+    joined = "\n".join(u.text for u in units)
+    # cell 0 was overwritten with the markdown title, so the code cells are 1..59
+    assert all(f"x = {i:03d}" in joined for i in range(1, 60))
+    assert joined.count("x = ") == 59, "a cell was dropped or duplicated"
+
+
+def test_python_locators_name_the_definition(tmp_path):
+    """A code citation is only useful if it names something you can search for."""
+    from studykb.extract import code
+
+    path = tmp_path / "m.py"
+    path.write_text(
+        "import os\n\n\n"
+        "def solve_qubo(q):\n    return q\n\n\n"
+        "class Solver:\n    pass\n\n\n"
+        'if __name__ == "__main__":\n    solve_qubo(1)\n'
+    )
+    units = code.extract_python(path)
+    locators = [u.locator for u in units]
+    assert locators[0] == "module level"
+    assert any(l.startswith("solve_qubo (line ") for l in locators), locators
+    assert any(l.startswith("Solver (line ") for l in locators), locators
+    # Imports and the __main__ block are where a script does its work: keep them.
+    assert "import os" in units[0].text
+    assert "__main__" in units[0].text
+    # A definition's body must not leak into the module-level unit.
+    assert "return q" not in units[0].text
+
+
+def test_unparseable_python_still_indexes(tmp_path):
+    from studykb.extract import code
+
+    path = tmp_path / "broken.py"
+    path.write_text("def oops(:\n    pass\n")
+    units = code.extract_python(path)
+    assert [u.locator for u in units] == ["whole file"]
+    assert "oops" in units[0].text

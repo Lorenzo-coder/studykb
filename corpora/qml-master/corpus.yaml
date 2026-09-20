@@ -47,6 +47,15 @@ sources:
   - glob: "papers/**/*.pdf"
     type: paper
     vision: never
+  # Notebooks and scripts. Kept apart from papers because they answer a
+  # different question — "how is this written" rather than "what is this" — and
+  # a separate type is what lets a search exclude them, or ask for only them.
+  - glob: "code/**/*.ipynb"
+    type: code
+    vision: never
+  - glob: "code/**/*.py"
+    type: code
+    vision: never
   - glob: "**/*.pptx"
     type: slides
   - glob: "**/*.pdf"          # anything not placed above

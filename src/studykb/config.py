@@ -188,7 +188,7 @@ class CalendarCfg(BaseModel):
 
 class SourceRule(BaseModel):
     glob: str
-    type: Literal["book", "slides", "paper", "transcript"]
+    type: Literal["book", "slides", "paper", "transcript", "code"]
     vision: Literal["auto", "force", "never"] = "auto"
     enabled: bool = True
 

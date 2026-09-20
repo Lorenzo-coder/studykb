@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Literal
 
 Provenance = Literal["text-layer", "ocr", "local-vlm", "asr", "asr-corrected"]
-SourceType = Literal["book", "slides", "paper", "transcript"]
+SourceType = Literal["book", "slides", "paper", "transcript", "code"]
 
 
 @dataclass
