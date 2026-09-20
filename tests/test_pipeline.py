@@ -334,3 +334,80 @@ def test_unparseable_python_still_indexes(tmp_path):
     units = code.extract_python(path)
     assert [u.locator for u in units] == ["whole file"]
     assert "oops" in units[0].text
+
+
+# -- 6. metrics ------------------------------------------------------------
+def test_llm_counts_calls_tokens_and_time(monkeypatch, cfg):
+    """A cost history nobody can trust is worse than none.
+
+    Every model call goes through LLM._post, so a stage added later is measured
+    without anyone remembering to wire it up. A failed call still counts: it
+    burned the time it burned.
+    """
+    from studykb.llm import LLM
+
+    class FakeResponse:
+        def __init__(self, payload): self._p = payload
+        def raise_for_status(self): pass
+        def json(self): return self._p
+
+    llm = LLM(cfg)
+    calls = []
+
+    def fake_post(path, json):
+        calls.append(path)
+        if len(calls) == 2:
+            raise RuntimeError("endpoint died")
+        return FakeResponse({"usage": {"prompt_tokens": 10, "completion_tokens": 4}})
+
+    monkeypatch.setattr(llm.client, "post", fake_post)
+    llm._post("/a", {})
+    with pytest.raises(RuntimeError):
+        llm._post("/b", {})
+    llm._post("/c", {})
+
+    c = llm.counters()
+    assert c["calls"] == 3, "the failed call must still be counted"
+    assert c["tokens_in"] == 20 and c["tokens_out"] == 8, "the failed call has no usage"
+    assert c["seconds"] > 0
+
+
+def test_stage_metrics_attribute_only_their_own_calls(cfg, tmp_path):
+    """Two stages must not inherit each other's cost."""
+    import sqlite3
+
+    from studykb import metrics
+
+    class FakeLLM:
+        def __init__(self): self.n = 0
+        def counters(self):
+            return {"calls": self.n, "seconds": self.n * 1.0, "tokens_in": self.n * 7, "tokens_out": 0}
+
+    llm = FakeLLM()
+    run = metrics.Run(corpus="t")
+    with run.stage("vision", llm) as m:
+        llm.n += 5
+        m.items = 5
+    with run.stage("embed", llm) as m:
+        llm.n += 2
+        m.items = 2
+
+    vision, embed = run.stages
+    assert (vision.llm_calls, embed.llm_calls) == (5, 2)
+    assert (vision.tokens_in, embed.tokens_in) == (35, 14)
+    assert vision.per_item == pytest.approx(vision.seconds / 5)
+
+    conn = sqlite3.connect(tmp_path / "s.db")
+    run.save(conn)
+    rows = metrics.stages_of(conn, run.run_id)
+    assert [r[0] for r in rows] == ["vision", "embed"]
+    assert metrics.history(conn)[0][0] == run.run_id
+
+
+def test_gpu_meter_is_silent_without_nvidia_smi(monkeypatch):
+    from studykb import metrics
+
+    monkeypatch.setattr(metrics.shutil, "which", lambda _: None)
+    g = metrics.GpuPower()
+    g.start(); g.stop()
+    assert not g.available and g.samples == 0 and g.wh == 0.0

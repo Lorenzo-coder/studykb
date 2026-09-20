@@ -46,6 +46,7 @@ Read in this order — each one consumes the output of the one above.
 | 8 | Syllabus | `calendar.py` | [calendar.md](internals/calendar.md) |
 | 9 | Serving | `server.py` | [serving.md](internals/serving.md) |
 | 10 | Review | `review.py` | [review.md](internals/review.md) |
+| 11 | Metrics | `metrics.py` | [metrics.md](internals/metrics.md) |
 
 ## A note on what these documents are for
 

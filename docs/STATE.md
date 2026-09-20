@@ -116,6 +116,27 @@ source as "not extracted" — two directories, not a bug.
 and the file that wanted it turned out to be handwriting, which ocrmypdf cannot
 read anyway.
 
+## What a run costs
+
+Every stage writes one row into `state.db`: wall time, sources, items, model
+calls, tokens, and watt-hours integrated from `nvidia-smi` while it ran.
+`ingest` prints the table when it finishes; `studykb stats` compares it against
+previous runs. See [metrics.md](internals/metrics.md).
+
+Measured on the test corpus (3 sources, 488 chunks), RTX 3070 Ti Laptop:
+
+| stage | time | items | per item | Wh | peak W |
+|---|---|---|---|---|---|
+| extract | 1m18s | 3 sources | 26s | 0.4 | 20 |
+| vision | 51s | 10 captions | 5.2s | 1.2 | 108 |
+| embed | 22s | 3 sources · 488 chunks | — | 0.4 | 98 |
+| **total** | **2m32s** | | | **2.0** | |
+
+The figure is whole-GPU draw, not this process's share, and it excludes the
+CPU — which is why `extract`, pure CPU work, shows 0.4 Wh at an idle 20 W.
+
+Compare `per item` between runs, never total time: the corpus grows.
+
 ## Where to change a number
 
 Nothing tunable is buried in a function any more. A value lives in exactly one

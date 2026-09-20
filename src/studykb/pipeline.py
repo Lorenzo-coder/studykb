@@ -23,7 +23,7 @@ from pathlib import Path
 
 from . import calendar as cal
 from . import chunk as chunking
-from . import extract, index, prompts
+from . import extract, index, metrics, prompts
 from .config import Config, Corpus
 from .limits import WORK_SHA_CHARS, WORK_STEM_CHARS
 from .llm import LLM
@@ -60,9 +60,18 @@ class Report:
     chunks: int = 0
     empty: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    # One row per stage: wall time, model calls, tokens, watt-hours. Written to
+    # state.db when the run ends, and read back by `studykb stats`.
+    run: metrics.Run | None = None
+
+    # `stages` counts what a stage produced — pages, captions, chunks — which is
+    # what the CLI table has always shown. `processed` counts the sources it
+    # touched, which is what a per-source cost needs.
+    processed: dict[str, int] = field(default_factory=dict)
 
     def bump(self, stage: str, n: int = 1) -> None:
         self.stages[stage] = self.stages.get(stage, 0) + n
+        self.processed[stage] = self.processed.get(stage, 0) + 1
 
 
 # --------------------------------------------------------------------------
@@ -189,6 +198,9 @@ def ingest(
                     report.bump(stage)
         return report
 
+    run = metrics.Run(corpus=corpus.domain)
+    report.run = run
+
     with State(cfg.storage.state_db) as st, LLM(cfg) as llm:
         for src in sources:
             src.sha = file_sha(src.path)
@@ -197,16 +209,24 @@ def ingest(
 
         _write_syllabus(cfg, modules, log)
 
-        if _wanted("ocr", only):
-            _stage_ocr(cfg, sources, st, fp, work, report, log)
-        if _wanted("extract", only):
-            _stage_extract(cfg, sources, st, fp, work, report, log)
-        if _wanted("asr_cleanup", only):
-            _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, report, log)
-        if _wanted("vision", only):
-            _stage_vision(cfg, sources, st, fp, work, llm, report, log)
-        if _wanted("embed", only):
-            _stage_embed(cfg, sources, st, fp, work, llm, report, log)
+        # Order matters: each stage reads what the one above it wrote.
+        stage_fns = {
+            "ocr": lambda: _stage_ocr(cfg, sources, st, fp, work, report, log),
+            "extract": lambda: _stage_extract(cfg, sources, st, fp, work, report, log),
+            "asr_cleanup": lambda: _stage_asr(cfg, corpus, modules, sources, st, fp, work, llm, report, log),
+            "vision": lambda: _stage_vision(cfg, sources, st, fp, work, llm, report, log),
+            "embed": lambda: _stage_embed(cfg, sources, st, fp, work, llm, report, log),
+        }
+        for name, fn in stage_fns.items():
+            if not _wanted(name, only):
+                continue
+            before_errors = len(report.errors)
+            with run.stage(name, llm) as m:
+                fn()
+            m.sources = report.processed.get(name, 0)
+            m.items = report.stages.get(name, 0)
+            m.errors = len(report.errors) - before_errors
+        run.save(st.conn)
 
     return report
 

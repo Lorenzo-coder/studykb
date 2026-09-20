@@ -12,6 +12,7 @@ previous model before the next stage loads its own.
 from __future__ import annotations
 
 import base64
+import time
 from pathlib import Path
 
 import httpx
@@ -23,11 +24,39 @@ class LLM:
     def __init__(self, cfg: Config, timeout: float = 600.0):
         self.cfg = cfg
         self.base = cfg.llm_endpoint.rstrip("/")
+        # Every model call in the system goes through _post, so counting there
+        # covers embeddings, captions and ASR cleanup without touching any of
+        # them. metrics.Run reads these as a before/after pair per stage.
+        self._calls = 0
+        self._seconds = 0.0
+        self._tokens_in = 0
+        self._tokens_out = 0
         self.client = httpx.Client(
             base_url=self.base,
             timeout=timeout,
             headers={"Authorization": f"Bearer {cfg.llm_api_key}"},
         )
+
+    def counters(self) -> dict:
+        return {"calls": self._calls, "seconds": self._seconds,
+                "tokens_in": self._tokens_in, "tokens_out": self._tokens_out}
+
+    def _post(self, path: str, payload: dict) -> dict:
+        """The one place a model is called, so the one place worth measuring."""
+        t0 = time.perf_counter()
+        try:
+            r = self.client.post(path, json=payload)
+            r.raise_for_status()
+            data = r.json()
+        finally:
+            # Counted even when it raises: a call that failed still cost the
+            # time it burned, and a stage that fails slowly is worth seeing.
+            self._seconds += time.perf_counter() - t0
+            self._calls += 1
+        usage = data.get("usage") or {}
+        self._tokens_in += usage.get("prompt_tokens", 0)
+        self._tokens_out += usage.get("completion_tokens", 0)
+        return data
 
     def close(self) -> None:
         self.client.close()
@@ -46,9 +75,8 @@ class LLM:
         out: list[list[float]] = []
         for i in range(0, len(texts), m.batch):
             batch = texts[i : i + m.batch]
-            r = self.client.post("/embeddings", json={"model": m.name, "input": batch})
-            r.raise_for_status()
-            data = sorted(r.json()["data"], key=lambda d: d["index"])
+            body = self._post("/embeddings", {"model": m.name, "input": batch})
+            data = sorted(body["data"], key=lambda d: d["index"])
             out.extend(d["embedding"] for d in data)
         for vec in out:
             if len(vec) != m.dim:
@@ -90,17 +118,16 @@ class LLM:
 
     # -- plumbing ----------------------------------------------------------
     def _chat(self, model: str, messages: list[dict]) -> str:
-        r = self.client.post(
+        body = self._post(
             "/chat/completions",
-            json={
+            {
                 "model": model,
                 "messages": messages,
                 "temperature": self.cfg.models.llm.temperature,
                 "max_tokens": self.cfg.models.llm.num_ctx // 2,
             },
         )
-        r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"].strip()
+        return body["choices"][0]["message"]["content"].strip()
 
     def unload(self, model: str) -> None:
         """Evict a model from VRAM so the next stage has room.
