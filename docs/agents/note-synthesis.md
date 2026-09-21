@@ -45,6 +45,11 @@ every claim must be checkable.
 - [Schuld — Machine Learning with Quantum Computers p.142] provenance: text-layer
 ```
 
+`## Worked through` is where the mathematics lives, in LaTeX: `$...$` inline and
+`$$...$$` in display. The note is read rendered — `GET /read` serves the vault
+with KaTeX — so a derivation that would be unreadable in a terminal belongs
+here, in full, rather than being flattened into prose.
+
 ## Rules
 
 - **Every claim carries its locator**, in brackets, inline. A sentence you
@@ -54,6 +59,8 @@ every claim must be checkable.
 - Treat `asr`/`asr-corrected` wording as approximate. The timestamps are exact;
   the transcription of a technical term may not be.
 - No filler. No "in this lecture we will see". No restating the heading.
+- **The note has to stand on its own.** Whoever opens it did not read the chat
+  that produced it. Nothing may be left implicit because it was said elsewhere.
 - Put what the passages do not cover under **Open questions** rather than
   filling the gap from your own knowledge. The gap is the useful signal: it is
   what needs the recording, the book, or the lecturer.

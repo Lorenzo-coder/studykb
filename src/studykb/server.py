@@ -8,14 +8,34 @@ passages it needs, each already carrying its citation.
 
 from __future__ import annotations
 
+import json
+from datetime import datetime
+from pathlib import Path
+
 from fastmcp import FastMCP
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 from . import calendar as cal
 from . import index, pipeline, search as search_mod
 from .config import Config, Corpus
 from .llm import LLM
+
+# The extraction mirrors are 32 MB of raw text: worth indexing, not worth reading.
+VAULT_SKIP = {"90-extracted"}
+
+
+def vault_file(root: Path, rel: str) -> Path | None:
+    """A vault note by its relative path, or None if the path does not earn one.
+
+    The reading routes hand a query parameter to the filesystem, so this is the
+    trust boundary. It stays even though the server binds to 127.0.0.1.
+    """
+    root = root.resolve()
+    path = (root / rel).resolve()
+    if not path.is_relative_to(root) or path.suffix != ".md" or not path.is_file():
+        return None
+    return path
 
 
 def build(cfg: Config, corpus: Corpus) -> FastMCP:
@@ -87,6 +107,47 @@ def build(cfg: Config, corpus: Corpus) -> FastMCP:
     @mcp.custom_route("/healthz", methods=["GET"])
     async def healthz(_: Request) -> JSONResponse:
         return JSONResponse({"ok": True, "chunks": index.total(client, cfg)})
+
+    @mcp.custom_route("/read", methods=["GET"])
+    async def read_ui(_: Request) -> HTMLResponse:
+        return HTMLResponse((Path(__file__).parent / "viewer.html").read_text())
+
+    @mcp.custom_route("/read/list", methods=["GET"])
+    async def read_list(_: Request) -> JSONResponse:
+        root = cfg.storage.vault
+        rels = (p.relative_to(root) for p in root.rglob("*.md"))
+        return JSONResponse(sorted(str(r) for r in rels if not set(r.parts) & VAULT_SKIP))
+
+    @mcp.custom_route("/read/raw", methods=["GET"])
+    async def read_raw(request: Request) -> PlainTextResponse:
+        path = vault_file(cfg.storage.vault, request.query_params.get("p", ""))
+        if path is None:
+            return PlainTextResponse("not found", status_code=404)
+        return PlainTextResponse(path.read_text())
+
+    @mcp.custom_route("/chat", methods=["GET", "POST"])
+    async def chat(request: Request) -> JSONResponse:
+        """The dialogue, so it can happen on the page instead of in a terminal.
+
+        Append-only. The page POSTs what the reader types; the agent driving the
+        session appends its own lines straight to the file and tails it.
+        """
+        log = cfg.storage.vault / ".chat.jsonl"
+        if request.method == "POST":
+            text = (await request.body()).decode("utf-8", "replace")[:8000].strip()
+            if not text:
+                return JSONResponse({"error": "empty"}, status_code=400)
+            # Both sides POST: the container owns the file, so nothing on the host
+            # needs write permission on it.
+            who = "claude" if request.query_params.get("who") == "claude" else "you"
+            entry = {"t": datetime.now().isoformat(timespec="seconds"), "who": who, "text": text}
+            with log.open("a") as fh:
+                fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            return JSONResponse({"ok": True})
+        raw = request.query_params.get("since", "0")
+        since = int(raw) if raw.isdigit() else 0
+        lines = log.read_text().splitlines() if log.exists() else []
+        return JSONResponse([json.loads(line) for line in lines[since:] if line.strip()])
 
     return mcp
 

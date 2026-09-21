@@ -96,6 +96,7 @@ in MANIFEST.md, which forces captioning regardless of any other threshold.
 | Vision | slides only; measured net-negative on prose |
 | Models | local first: bge-m3, qwen2.5vl:7b, granite3.2-vision:2b, qwen3:8b |
 | Where a number lives | three places, by what it changes — see below |
+| Reading the notes | `GET /read` on the serve process, KaTeX in the browser. The terminal is for the dialogue, the browser for the reading |
 
 ## One state file per machine, and there are two of them
 

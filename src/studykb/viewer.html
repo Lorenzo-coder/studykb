@@ -1,0 +1,218 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>studykb — vault</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #23211d; --dim: #6b665c; --line: #e2ddd3; --accent: #7a4a1f;
+    --side: #f4f1ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17171a; --fg: #ddd9d2; --dim: #8b867c; --line: #2e2e33; --accent: #d9a05b;
+      --side: #1d1d21;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, sans-serif;
+    display: grid; grid-template-columns: 260px 1fr 380px; height: 100vh;
+  }
+  aside {
+    background: var(--side); border-right: 1px solid var(--line);
+    overflow-y: auto; padding: 16px; font-size: 14px;
+  }
+  aside input {
+    width: 100%; padding: 6px 8px; margin-bottom: 12px;
+    border: 1px solid var(--line); border-radius: 4px;
+    background: var(--bg); color: var(--fg); font: inherit;
+  }
+  aside h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--dim); margin: 16px 0 6px;
+  }
+  aside a {
+    display: block; padding: 3px 6px; margin-left: -6px; border-radius: 4px;
+    color: var(--fg); text-decoration: none;
+  }
+  aside a:hover { background: var(--line); }
+  aside a.on { background: var(--accent); color: var(--bg); }
+  main { overflow-y: auto; padding: 48px 40px 30vh; }
+  article {
+    max-width: 38em; margin: 0 auto;
+    font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.7;
+  }
+  article h1, article h2, article h3 { font-family: system-ui, sans-serif; line-height: 1.3; }
+  article h1 { font-size: 1.7em; margin-bottom: .2em; }
+  article h2 { font-size: 1.25em; margin-top: 2em; border-bottom: 1px solid var(--line); padding-bottom: .2em; }
+  article h3 { font-size: 1.05em; margin-top: 1.6em; }
+  article blockquote {
+    margin: 1em 0; padding-left: 1em; border-left: 3px solid var(--line); color: var(--dim);
+  }
+  article code {
+    font-family: ui-monospace, monospace; font-size: .85em;
+    background: var(--side); padding: 1px 4px; border-radius: 3px;
+  }
+  article pre { background: var(--side); padding: 12px; border-radius: 6px; overflow-x: auto; }
+  article pre code { background: none; padding: 0; }
+  article table { border-collapse: collapse; font-size: .9em; }
+  article th, article td { border: 1px solid var(--line); padding: 5px 10px; text-align: left; }
+  article .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+  .empty { color: var(--dim); font-style: italic; }
+
+  #chat {
+    background: var(--side); border-left: 1px solid var(--line);
+    display: grid; grid-template-rows: auto 1fr auto; min-height: 0;
+  }
+  #chat h2 {
+    margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim);
+  }
+  #log { overflow-y: auto; padding: 16px; font-size: 15px; }
+  #log .msg { margin-bottom: 14px; }
+  #log .msg > b {
+    display: block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--dim); margin-bottom: 2px;
+  }
+  #log .you > b { color: var(--accent); }
+  #log .msg p:first-child { margin-top: 0; }
+  #log .msg p:last-child { margin-bottom: 0; }
+  #log .katex-display { margin: .5em 0; overflow-x: auto; }
+  #say {
+    width: 100%; border: 0; border-top: 1px solid var(--line); resize: none;
+    padding: 12px 16px; background: var(--bg); color: var(--fg);
+    font: inherit; font-size: 15px; height: 5.5em;
+  }
+  #say:focus { outline: none; }
+</style>
+
+<aside>
+  <input id="q" placeholder="filtra…" autofocus>
+  <nav id="tree"></nav>
+</aside>
+<main><article id="doc" class="empty">Scegli una nota a sinistra.</article></main>
+<section id="chat">
+  <h2>dialogo</h2>
+  <div id="log"></div>
+  <textarea id="say" placeholder="scrivi qui — invio manda, shift+invio va a capo"></textarea>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@14.1.3/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script>
+let files = [];
+
+// Markdown would eat the LaTeX: `a_i ... b_j` becomes italics, `\\` disappears.
+// So code and math come out first, each already rendered to HTML, and go back
+// in as placeholders once marked has run on what is left.
+function render(src) {
+  const held = [];
+  const hold = (html) => `%%HOLD${held.push(html) - 1}%%`;
+  const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  src = src.replace(/```[\s\S]*?```/g, (m) => hold(marked.parse(m)));
+  src = src.replace(/`([^`\n]+)`/g, (_, code) => hold(`<code>${esc(code)}</code>`));
+  // Inline math must not start or end on a space, or "costs $5 ... $10 later"
+  // in an extracted passage becomes a formula.
+  src = src.replace(/\$\$([\s\S]+?)\$\$|\$(?!\s)([^\n$]+?)(?<!\s)\$/g, (_, display, inline) =>
+    hold(katex.renderToString(display ?? inline, {
+      displayMode: display !== undefined, throwOnError: false,
+    })));
+  return marked.parse(src)
+    .replace(/%%HOLD(\d+)%%/g, (_, n) => held[n])
+    .replace(/<p>(<pre[\s\S]*?<\/pre>)<\/p>/g, "$1");
+}
+
+function drawTree(filter = "") {
+  const f = filter.toLowerCase();
+  const shown = files.filter((p) => p.toLowerCase().includes(f));
+  const here = decodeURIComponent(location.hash.slice(2));
+  let dir = null;
+  document.getElementById("tree").innerHTML = shown.map((p) => {
+    const cut = p.lastIndexOf("/");
+    const d = cut < 0 ? "." : p.slice(0, cut);
+    const head = d === dir ? "" : `<h2>${d}</h2>`;
+    dir = d;
+    const name = p.slice(cut + 1).replace(/\.md$/, "");
+    return `${head}<a href="#/${p}" class="${p === here ? "on" : ""}">${name}</a>`;
+  }).join("") || `<p class="empty">nessun file</p>`;
+}
+
+// `fresh` distingue il cambio di nota dal riaggiornamento: nel primo caso si
+// torna in cima, nel secondo si resta dove si stava leggendo.
+let docSig = "", docBig = false;
+
+async function paint(fresh) {
+  const path = decodeURIComponent(location.hash.slice(2));
+  if (!path || (!fresh && docBig)) return;
+  const main = document.querySelector("main");
+  const doc = document.getElementById("doc");
+  let res, src = "";
+  try {
+    res = await fetch("/read/raw?p=" + encodeURIComponent(path));
+    if (res.ok) src = await res.text();
+  } catch (e) { return; }
+  const sig = path + "\n" + (res.ok ? src : "404");
+  if (!fresh && sig === docSig) return;
+  const top = main.scrollTop;
+  docSig = sig;
+  // Un rapporto di review e' un megabyte: non si tiene sotto poll ogni 1,5 s.
+  docBig = src.length > 200000;
+  doc.className = res.ok ? "" : "empty";
+  doc.innerHTML = res.ok ? render(src) : "Non c'e' piu': " + path;
+  document.title = path.split("/").pop().replace(/\.md$/, "") + " — studykb";
+  main.scrollTop = fresh ? 0 : top;
+  drawTree(document.getElementById("q").value);
+}
+
+const show = () => paint(true);
+
+// La chat sta in un file append-only: la pagina scrive con POST, la sessione
+// che guida lo studio scrive in coda al file e lo tiene sotto tail.
+let seen = 0;
+const log = document.getElementById("log");
+const say = document.getElementById("say");
+
+async function poll() {
+  try {
+    const msgs = await (await fetch("/chat?since=" + seen)).json();
+    for (const m of msgs) {
+      const div = document.createElement("div");
+      div.className = "msg " + m.who;
+      div.innerHTML = `<b>${m.who === "you" ? "tu" : "claude"}</b>` + render(m.text);
+      log.append(div);
+    }
+    if (msgs.length) { seen += msgs.length; log.scrollTop = log.scrollHeight; }
+  } catch (e) { /* il server riparte, il poll successivo riprende */ }
+}
+
+say.onkeydown = async (e) => {
+  if (e.key !== "Enter" || e.shiftKey || !say.value.trim()) return;
+  e.preventDefault();
+  const text = say.value;
+  say.value = "";
+  await fetch("/chat", { method: "POST", body: text });
+  poll();
+};
+
+// L'elenco si aggiorna da solo: una nota scritta mentre la pagina e' aperta
+// compare senza ricaricare. Sedici nomi di file, il confronto costa niente.
+let listSig = "";
+async function refreshList() {
+  try {
+    const list = await (await fetch("/read/list")).json();
+    if (list.join("|") === listSig) return;
+    listSig = list.join("|");
+    files = list;
+    drawTree(document.getElementById("q").value);
+  } catch (e) { /* il server riparte, il giro successivo riprende */ }
+}
+
+setInterval(() => { poll(); refreshList(); paint(false); }, 1500);
+poll();
+
+addEventListener("hashchange", show);
+document.getElementById("q").oninput = (e) => drawTree(e.target.value);
+refreshList().then(show);
+</script>

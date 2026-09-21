@@ -468,3 +468,24 @@ def test_gpu_meter_is_silent_without_nvidia_smi(monkeypatch):
     g = metrics.GpuPower()
     g.start(); g.stop()
     assert not g.available and g.samples == 0 and g.wh == 0.0
+
+
+def test_vault_file_refuses_everything_outside_the_vault(tmp_path):
+    """The reading routes hand a query parameter to the filesystem.
+
+    Fifth thing worth guarding: this one is silent in the worst way — a served
+    file that should never have left the vault.
+    """
+    from studykb.server import vault_file
+
+    vault = tmp_path / "vault"
+    (vault / "10-modules").mkdir(parents=True)
+    note = vault / "10-modules" / "03-grover.md"
+    note.write_text("# Grover\n")
+    (vault / "notes.txt").write_text("not a note")
+    (tmp_path / "secret.md").write_text("outside")
+
+    assert vault_file(vault, "10-modules/03-grover.md") == note
+    for rel in ("../secret.md", "10-modules/../../secret.md", str(tmp_path / "secret.md"),
+                "notes.txt", "10-modules", "missing.md", ""):
+        assert vault_file(vault, rel) is None, rel

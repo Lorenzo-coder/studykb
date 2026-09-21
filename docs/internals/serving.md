@@ -33,6 +33,45 @@ place that instruction reaches a model calling the tool.
 Same FastMCP app, so there is one process and one port. `/healthz` returns the
 chunk count, which makes it a liveness check and a smoke test at once.
 
+## Reading the vault
+
+A terminal does not render LaTeX, and the notes are full of it. Three routes on
+the same app turn the vault into a page:
+
+| route | returns |
+|---|---|
+| `/read` | `viewer.html` — sidebar, filter, markdown rendered with KaTeX |
+| `/read/list` | every `.md` under the vault, minus `90-extracted` |
+| `/read/raw?p=<rel>` | one note, verbatim |
+
+They live here rather than in a separate static server because this process
+already holds `cfg.storage.vault` and already has the port. One process, one
+port, no second thing to remember to start.
+
+`server.vault_file()` is the trust boundary: `/read/raw` hands a query parameter
+to the filesystem, so the path is resolved and rejected unless it stays inside
+the vault and ends in `.md`. Binding to `127.0.0.1` is not the guard, it is the
+reason a missing guard would go unnoticed. `tests/test_pipeline.py` covers it.
+
+Markdown would eat the mathematics — `a_i … b_j` turns into italics, `\\`
+disappears — so `viewer.html` pulls code and math out first, renders them, and
+puts them back as placeholders once `marked` has run.
+
+## The dialogue, on the page
+
+`/chat` is a two-line protocol over one append-only file, `<vault>/.chat.jsonl`:
+`POST` appends a message, `GET ?since=<n>` returns everything after the nth. The
+page polls it; the agent running the study session tails the file and posts its
+own replies back. Messages go through the viewer's markdown renderer, so an
+answer carrying a derivation is as readable as a note.
+
+**Both sides POST.** The container runs as root, so a file it creates is not
+writable from the host — having the agent write through the route instead of
+straight to the file removes that whole class of problem.
+
+This is a bridge to a live session, not a service. Nothing answers when no agent
+is tailing the file; the transcript simply stops.
+
 ## Lifetime
 
 `build()` constructs the Qdrant client, the LLM client and the parsed calendar
