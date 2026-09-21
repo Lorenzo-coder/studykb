@@ -92,6 +92,7 @@ in MANIFEST.md, which forces captioning regardless of any other threshold.
 | Docs language | English |
 | Docs depth | one per subsystem plus a glossary |
 | Roadmap scope | platform + operations, not the study workflow |
+| Skills | `skills/` holds them for versioning only — nothing loads them from here, they are symlinked into `~/Personale/.claude/skills/`. See `skills/README.md` |
 | Repo | `/home/locode/Personale/studykb` → `git@github.com:Lorenzo-coder/studykb.git`, private. Pushed over SSH; `gh` is still not installed |
 | Vision | slides only; measured net-negative on prose |
 | Models | local first: bge-m3, qwen2.5vl:7b, granite3.2-vision:2b, qwen3:8b |
