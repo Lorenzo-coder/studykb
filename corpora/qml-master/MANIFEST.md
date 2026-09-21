@@ -18,163 +18,173 @@ under the new path while the old chunks stay behind, so classification is
 changed **here**, by editing a line, and a corrected module re-indexes that one
 source.
 
-| path | module | type | enabled |
-|---|---|---|---|
-| books/3G Editorial Board - Quantum Blockchain (2023) - libgen.li.pdf | M9 |  |  |
-| books/Handouts__FASANO_QML_2025-2026_iperref.pdf | M1 |  |  |
-| books/Landau. Lifshitz - Meccanica quantistica Teoria non relativistica (Fisica Teorica 3) - Mir - 1994.pdf | M3 |  | false |
-| books/Landau_Lifshitz_T2_short.pdf | M3 |  | false |
-| books/Machine Learning with Quantum Computers (Quantum Science and -- Maria Schuld;Francesco Petruccione.pdf | M7 |  |  |
-| books/Michael A. Nielsen, Isaac L. Chuang - Quantum Computation and Quantum Information_ 10th Anniversary Edition (2011, Cambridge University Press).pdf | M4 |  |  |
-| books/Quantum Machine Learning A Hands-on Tutorial for Machine Learning Practitioners and Researchers.pdf | M7 |  |  |
-| books/Quantum Machine Learning _ Thinking and Exploration in -- Claudio Conti.pdf | M7 |  |  |
-| books/Tacchino_PhDThesis.pdf | M7 |  |  |
-| books/QuickIntroToPython.pdf | M1 |  |  |
-| code/01_PCA_2.ipynb | M2 |  |  |
-| code/02_KMeans.ipynb | M2 |  |  |
-| code/03_HierarchicalClustering.ipynb | M2 |  |  |
-| code/04_tSNE_UMAP.ipynb | M2 |  |  |
-| code/05_CNN.ipynb | M2 |  |  |
-| code/05_CNN_segmentation.ipynb | M2 |  |  |
-| code/1_Basic_intro_qiskit_and_noise_Sampler.ipynb | M6 |  |  |
-| code/2_classification.ipynb | M2 |  |  |
-| code/2_example_Shor.ipynb | M6 |  |  |
-| code/3_focal.ipynb | M2 |  |  |
-| code/3_simplified_Shor.ipynb | M6 |  |  |
-| code/4.5_classification_exercise.ipynb | M2 |  |  |
-| code/4_Shor.ipynb | M6 |  |  |
-| code/4_pretraining.ipynb | M2 |  |  |
-| code/5_advanced_Shor.ipynb | M6 |  |  |
-| code/5_detection.ipynb | M2 |  |  |
-| code/6_open-world-detection.ipynb | M2 |  |  |
-| code/7_od_exercise (1).ipynb | M2 |  |  |
-| code/GroverTutorial.ipynb | M6 |  |  |
-| code/NB1_MNIST_stud.ipynb | M2 |  |  |
-| code/NB2_FashionMNIST.ipynb | M2 |  |  |
-| code/QK.ipynb | M6 |  |  |
-| code/QML - Classification SVM.ipynb | M2 |  |  |
-| code/QML - Decision Tree.ipynb | M2 |  |  |
-| code/QML - Neural Network MLP PyTorch.ipynb | M2 |  |  |
-| code/QML Knn - NaiveBayes.ipynb | M2 |  |  |
-| code/QML- Clustering - DBScan.ipynb | M2 |  |  |
-| code/QML- Clustering K-Means and Hierarchical Clustering.ipynb | M2 |  |  |
-| code/README.md | M6 |  | false |
-| code/Solution_0-Setup.ipynb | M6 |  |  |
-| code/Solution_1-QuantumRouteOptimisation.ipynb | M6 |  |  |
-| code/Untitled0.ipynb | M2 |  |  |
-| code/cnn_pytorch.ipynb | M2 |  |  |
-| code/decision_tree.ipynb | M2 |  |  |
-| code/mlp_sklearn_pytorch.ipynb | M2 |  |  |
-| code/qiskitTutorial final version.ipynb | M4 |  |  |
-| code/report.md | M6 |  |  |
-| code/tutorialDJ.ipynb | M4 |  |  |
-| code/tutorialGrover.ipynb | M4 |  |  |
-| code/tutorialGroverSudoku.ipynb | M4 |  |  |
-| code/tutorialPennylane.ipynb | M5 |  |  |
-| code/tutorialQGANHybrid.ipynb | M5 |  |  |
-| code/tutorialQGANQuantum.ipynb | M5 |  |  |
-| papers/3743128.pdf | M2 |  |  |
-| papers/6a21017641a580d45c869494_20260604 AXE ASX Announcement - CSIRO QML progress report(final).pdf | M9 |  |  |
-| papers/Assessment - July 3rd - Modules 4, 5 and 6_ Attempt review _ Ca' Foscari.pdf |  |  |  |
-| papers/Assessment - May 22nd - Modules 1, 2, 3_ Attempt review _ Ca' Foscari.pdf |  |  |  |
-| papers/EvansRosenthal2009.pdf | M1 |  |  |
-| papers/Kernel-based training of quantum models with scikit-learn _ PennyLane Demos.pdf | M5 |  |  |
-| papers/Lecture4 (spins_and_qubits).pdf | M3 |  |  |
-| papers/ML Notes_v1.pdf | M2 |  |  |
-| papers/Parigi2024_Quantum‐Noise‐Driven-Generative-Diffusion-Models.pdf | M5 |  |  |
-| papers/Quantum Machine Learning and Deep Learning: Fundamentals, Algorithms, Techniques, and Real-World Applications .pdf | M7 |  |  |
-| papers/Quantum artificial intelligence: A survey.pdf | M7 |  |  |
-| papers/Quantum convolutional neural networks.pdf | M7 |  |  |
-| papers/Quanvolutional Neural Networks _ PennyLane Demos.pdf | M5 |  |  |
-| papers/Zhang2026-Generative-Quantum-Machine-Learning-via-Denoising-Diffusion-Probabilistic-Models.pdf | M5 |  |  |
-| papers/[Quantum Machine Intelligence 2026-jun vol. 8 iss. 1] Benchmarking quantum machine learning methods for intrusion detection on noisy quantum computers{Cirillo, Franco (author)_Esposito, Christian (author)_Taek Seo, Jung (author)}(2026 Ju...{115750754}.pdf | M9 |  |  |
-| papers/complex_numbers.pdf | M3 |  |  |
-| papers/exercise2.1.pdf | M3 |  |  |
-| papers/exercise2.2.pdf | M3 |  |  |
-| papers/exercise3.1.pdf | M3 |  |  |
-| papers/exercise3.2.pdf | M3 |  |  |
-| papers/exercise3.3.pdf | M3 |  |  |
-| papers/exercise4.1.pdf | M3 |  |  |
-| papers/exercise4.2.pdf | M3 |  |  |
-| papers/exercises.pdf | M3 |  |  |
-| papers/exercises_with_solutions.pdf | M3 |  |  |
-| papers/lecture_QM_formalism.pdf | M3 |  |  |
-| papers/lecture_angular_momentum.pdf | M3 |  |  |
-| papers/lectures_formalism1.pdf | M3 |  |  |
-| papers/lectures_master_spin_qubit.pdf | M3 |  |  |
-| papers/mathematics-11-03947-v2.pdf | M9 |  |  |
-| papers/potential_well.pdf | M3 |  |  |
-| papers/proof_operators.pdf | M3 |  |  |
-| slides/002_AI_INTRO.pdf | M2 |  |  |
-| slides/003_Machine_Learning_supervised_unsupervised.pdf | M2 |  |  |
-| slides/004_Classification copia.pdf | M2 |  |  |
-| slides/005_01_Clustering copia.pdf | M2 |  |  |
-| slides/20260905_Algorithms_Foundations_CFCS.pptx.pdf | M7 |  |  |
-| slides/20260911_Circuit_Design_Embeddings_Frameworks_CFCS.pptx.pdf | M7 |  |  |
-| slides/20260912_Classification_Applications_Limits_CFCS.pptx.pdf | M7 |  |  |
-| slides/CaFoscariQML - ClassificationToDetection (1).pdf | M2 |  |  |
-| slides/FCaruso_From Quantum Computing to Quantum AI_2026.pdf | M4 |  |  |
-| slides/Ligorio_DLMLBasics_MQML_CaFoscari.pdf | M2 |  |  |
-| slides/Master_Ca_Foscari 2026 - Luca Crippa.pdf | M6 |  |  |
-| slides/Master_Ca_Foscari 2026 - Tommaso Fioravanti.pdf | M6 |  |  |
-| slides/Master_QUANTUM_MACHINE_LEARNING-CORAZZA-Preliminaries-Slides.pdf | M1 |  |  |
-| slides/PCA.pdf | M2 |  |  |
-| slides/QML Master Executive 2026.pdf | M6 |  |  |
-| slides/Shor.pdf | M6 |  |  |
-| slides/Slides_Fasano_QML_2025-2026.pdf | M1 |  |  |
-| slides/Slides_master_QML1.pdf | M3 |  |  |
-| slides/Slides_master_QML2.pdf | M3 |  |  |
-| slides/deep-learning (final version).pptx | M2 |  |  |
-| slides/deep-learning.pptx | M2 |  | false |
-| slides/hierarchical clustering.pdf | M2 |  |  |
-| slides/introduction ML.pdf | M2 |  |  |
-| slides/lect2_probability.pdf | M1 |  |  |
-| slides/lect3_correlation.pdf | M1 |  |  |
-| slides/lect4_sampling.pdf | M1 |  |  |
-| slides/lect5_testing.pdf | M1 |  |  |
-| slides/lezione2.pdf | M4 |  |  |
-| slides/slides of lesson QML 2025.pdf | M6 |  |  |
-| slides/slides1.pdf | M4 |  |  |
-| slides/slidesGM.pdf | M4 |  |  |
-| slides/slidesML2.pdf | M2 |  |  |
-| slides/whiteboard1.pdf | M4 |  |  |
-| slides/whiteboard3.pdf | M4 |  |  |
-| slides/whiteboard4.pdf | M5 |  |  |
-| transcripts/BARNES_02 PRIVACY and DATA PROTECTION (Pomeriggio).docm | M1 |  |  |
-| transcripts/CARUSO 05 TRASCRIZIONE Ripulita Q algo C data encoding QML bis.docx | M4 |  |  |
-| transcripts/CRIPPA_01-02 Impl-APP with IBM QISKIT Framework.docm | M6 |  |  |
-| transcripts/CRIPPA_03_Impl-APP with IBM Qiskit Framework continue.docm | M6 |  |  |
-| transcripts/CRIPPA_04_Impl-APP with IBM Qiskit Framework POMERIGGIO.docm | M6 |  |  |
-| transcripts/MARTINA 01 QC BASICs 20260516 mattina.docm | M4 |  |  |
-| transcripts/MARTINA 02 QC BASICs 20260516 POMERIGGIO.docm | M4 |  |  |
-| transcripts/MARTINA 03 PRACTICE on Q CIRCUITs mattina.docm | M4 |  |  |
-| transcripts/MARTINA 04 PRACTICE on Q CIRCUITs AFTERNOON.docm | M4 |  |  |
-| transcripts/MARTINA 05 TRASCRIZIONE Ripulita.docm | M4 |  |  |
-| transcripts/MARTINA 06 Cleaned TRANSCRIPTION Sudoku Practice GEN AI.docm | M4 |  |  |
-| transcripts/MARTINA 07 Clean TRANSCRIPTION QAE QVAE GAN QGAN GDM.docm | M4 |  |  |
-| transcripts/MARTINA 08 Clean TRANSCRIPTION QML Mod - Pennilane QQ Ex.docm | M5 |  |  |
-| transcripts/MARTINA 08-9 Clean TRANSCRIPTION QML Mod - PennyL QQ Ex (ALL DAY).docm | M5 |  |  |
-| transcripts/MARTINA_10  Quanvolutional NN Workgroup.docm | M5 |  |  |
-| transcripts/MARTINA_11  Quanvolutional NN Workgroup POMERIGGIO.docm | M5 |  |  |
-| transcripts/ONORATI_01_NOISE Correction and Mitigation.docm | M6 |  |  |
-| transcripts/ONORATI_02_NOISE Correction and Mitigation POMERIGGIO.docm | M6 |  |  |
-| transcripts/Useful links.docx |  |  | false |
-| transcripts/ZARBO_01_QMDL_ALGOrithms and examples (mattina).docm | M7 |  |  |
-| transcripts/ZARBO_02_QMDL_ALGOrithms and examples (fine POMERIGGIO dalle 16 21).docm | M7 |  |  |
-| transcripts/ZARBO_03.docm | M7 |  |  |
-| transcripts/ZARBO_04.docm | M7 |  |  |
-| transcripts/ZARBO_05.docm | M7 |  |  |
-| transcripts/ZARBO_06 Afternoon.docm | M7 |  |  |
-| transcripts/ZARBO_07.docm | M7 |  |  |
-| transcripts/ZARBO_08.docm | M7 |  |  |
-| transcripts/ZARBO_09.docm | M7 |  |  |
-| transcripts/ZARBO_10.docm | M7 |  |  |
+| path                                                                                                                                                                                                                                                                   | module | type | enabled |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---- | ------- |
+| books/3G Editorial Board - Quantum Blockchain (2023) - libgen.li.pdf                                                                                                                                                                                                   | M9     |      |         |
+| books/Handouts__FASANO_QML_2025-2026_iperref.pdf                                                                                                                                                                                                                       | M1     |      |         |
+| books/Landau. Lifshitz - Meccanica quantistica Teoria non relativistica (Fisica Teorica 3) - Mir - 1994.pdf                                                                                                                                                            | M3     |      | false   |
+| books/Landau_Lifshitz_T2_short.pdf                                                                                                                                                                                                                                     | M3     |      | false   |
+| books/Machine Learning with Quantum Computers (Quantum Science and -- Maria Schuld;Francesco Petruccione.pdf                                                                                                                                                           | M7     |      |         |
+| books/Michael A. Nielsen, Isaac L. Chuang - Quantum Computation and Quantum Information_ 10th Anniversary Edition (2011, Cambridge University Press).pdf                                                                                                               | M4     |      |         |
+| books/Quantum Machine Learning A Hands-on Tutorial for Machine Learning Practitioners and Researchers.pdf                                                                                                                                                              | M7     |      |         |
+| books/Quantum Machine Learning _ Thinking and Exploration in -- Claudio Conti.pdf                                                                                                                                                                                      | M7     |      |         |
+| books/Tacchino_PhDThesis.pdf                                                                                                                                                                                                                                           | M7     |      |         |
+| books/QuickIntroToPython.pdf                                                                                                                                                                                                                                           | M1     |      |         |
+| code/01_PCA_2.ipynb                                                                                                                                                                                                                                                    | M2     |      |         |
+| code/02_KMeans.ipynb                                                                                                                                                                                                                                                   | M2     |      |         |
+| code/03_HierarchicalClustering.ipynb                                                                                                                                                                                                                                   | M2     |      |         |
+| code/04_tSNE_UMAP.ipynb                                                                                                                                                                                                                                                | M2     |      |         |
+| code/05_CNN.ipynb                                                                                                                                                                                                                                                      | M2     |      |         |
+| code/05_CNN_segmentation.ipynb                                                                                                                                                                                                                                         | M2     |      |         |
+| code/1_Basic_intro_qiskit_and_noise_Sampler.ipynb                                                                                                                                                                                                                      | M6     |      |         |
+| code/2_classification.ipynb                                                                                                                                                                                                                                            | M2     |      |         |
+| code/2_example_Shor.ipynb                                                                                                                                                                                                                                              | M6     |      |         |
+| code/3_focal.ipynb                                                                                                                                                                                                                                                     | M2     |      |         |
+| code/3_simplified_Shor.ipynb                                                                                                                                                                                                                                           | M6     |      |         |
+| code/4.5_classification_exercise.ipynb                                                                                                                                                                                                                                 | M2     |      |         |
+| code/4_Shor.ipynb                                                                                                                                                                                                                                                      | M6     |      |         |
+| code/4_pretraining.ipynb                                                                                                                                                                                                                                               | M2     |      |         |
+| code/5_advanced_Shor.ipynb                                                                                                                                                                                                                                             | M6     |      |         |
+| code/5_detection.ipynb                                                                                                                                                                                                                                                 | M2     |      |         |
+| code/6_open-world-detection.ipynb                                                                                                                                                                                                                                      | M2     |      |         |
+| code/7_od_exercise (1).ipynb                                                                                                                                                                                                                                           | M2     |      |         |
+| code/GroverTutorial.ipynb                                                                                                                                                                                                                                              | M6     |      |         |
+| code/NB1_MNIST_stud.ipynb                                                                                                                                                                                                                                              | M2     |      |         |
+| code/NB2_FashionMNIST.ipynb                                                                                                                                                                                                                                            | M2     |      |         |
+| code/QK.ipynb                                                                                                                                                                                                                                                          | M6     |      |         |
+| code/QML - Classification SVM.ipynb                                                                                                                                                                                                                                    | M2     |      |         |
+| code/QML - Decision Tree.ipynb                                                                                                                                                                                                                                         | M2     |      |         |
+| code/QML - Neural Network MLP PyTorch.ipynb                                                                                                                                                                                                                            | M2     |      |         |
+| code/QML Knn - NaiveBayes.ipynb                                                                                                                                                                                                                                        | M2     |      |         |
+| code/QML- Clustering - DBScan.ipynb                                                                                                                                                                                                                                    | M2     |      |         |
+| code/QML- Clustering K-Means and Hierarchical Clustering.ipynb                                                                                                                                                                                                         | M2     |      |         |
+| code/README.md                                                                                                                                                                                                                                                         | M6     |      | false   |
+| code/Solution_0-Setup.ipynb                                                                                                                                                                                                                                            | M6     |      |         |
+| code/Solution_1-QuantumRouteOptimisation.ipynb                                                                                                                                                                                                                         | M6     |      |         |
+| code/Untitled0.ipynb                                                                                                                                                                                                                                                   | M2     |      |         |
+| code/cnn_pytorch.ipynb                                                                                                                                                                                                                                                 | M2     |      |         |
+| code/decision_tree.ipynb                                                                                                                                                                                                                                               | M2     |      |         |
+| code/mlp_sklearn_pytorch.ipynb                                                                                                                                                                                                                                         | M2     |      |         |
+| code/qiskitTutorial final version.ipynb                                                                                                                                                                                                                                | M4     |      |         |
+| code/report.md                                                                                                                                                                                                                                                         | M6     |      |         |
+| code/tutorialDJ.ipynb                                                                                                                                                                                                                                                  | M4     |      |         |
+| code/tutorialGrover.ipynb                                                                                                                                                                                                                                              | M4     |      |         |
+| code/tutorialGroverSudoku.ipynb                                                                                                                                                                                                                                        | M4     |      |         |
+| code/tutorialPennylane.ipynb                                                                                                                                                                                                                                           | M5     |      |         |
+| code/tutorialQGANHybrid.ipynb                                                                                                                                                                                                                                          | M5     |      |         |
+| code/tutorialQGANQuantum.ipynb                                                                                                                                                                                                                                         | M5     |      |         |
+| papers/Assessment - July 3rd - Modules 4, 5 and 6_ Attempt review _ Ca' Foscari.pdf                                                                                                                                                                                    |        |      |         |
+| papers/Assessment - May 22nd - Modules 1, 2, 3_ Attempt review _ Ca' Foscari.pdf                                                                                                                                                                                       |        |      |         |
+| papers/EvansRosenthal2009.pdf                                                                                                                                                                                                                                          | M1     |      |         |
+| papers/Kernel-based training of quantum models with scikit-learn _ PennyLane Demos.pdf                                                                                                                                                                                 | M5     |      |         |
+| papers/Lecture4 (spins_and_qubits).pdf                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/ML Notes_v1.pdf                                                                                                                                                                                                                                                 | M2     |      |         |
+| papers/Parigi2024_Quantum‐Noise‐Driven-Generative-Diffusion-Models.pdf                                                                                                                                                                                                 | M5     |      |         |
+| papers/Quantum Machine Learning and Deep Learning: Fundamentals, Algorithms, Techniques, and Real-World Applications .pdf                                                                                                                                              | M7     |      |         |
+| papers/Quantum artificial intelligence: A survey.pdf                                                                                                                                                                                                                   | M7     |      |         |
+| papers/Quantum convolutional neural networks.pdf                                                                                                                                                                                                                       | M7     |      |         |
+| papers/Quanvolutional Neural Networks _ PennyLane Demos.pdf                                                                                                                                                                                                            | M5     |      |         |
+| papers/Zhang2026-Generative-Quantum-Machine-Learning-via-Denoising-Diffusion-Probabilistic-Models.pdf                                                                                                                                                                  | M5     |      |         |
+| papers/[Quantum Machine Intelligence 2026-jun vol. 8 iss. 1] Benchmarking quantum machine learning methods for intrusion detection on noisy quantum computers{Cirillo, Franco (author)_Esposito, Christian (author)_Taek Seo, Jung (author)}(2026 Ju...{115750754}.pdf | M9     |      |         |
+| papers/complex_numbers.pdf                                                                                                                                                                                                                                             | M3     |      |         |
+| papers/exercise2.1.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercise2.2.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercise3.1.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercise3.2.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercise3.3.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercise4.1.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercise4.2.pdf                                                                                                                                                                                                                                                 | M3     |      |         |
+| papers/exercises.pdf                                                                                                                                                                                                                                                   | M3     |      |         |
+| papers/exercises_with_solutions.pdf                                                                                                                                                                                                                                    | M3     |      |         |
+| papers/lecture_QM_formalism.pdf                                                                                                                                                                                                                                        | M3     |      |         |
+| papers/lecture_angular_momentum.pdf                                                                                                                                                                                                                                    | M3     |      |         |
+| papers/lectures_formalism1.pdf                                                                                                                                                                                                                                         | M3     |      |         |
+| papers/lectures_master_spin_qubit.pdf                                                                                                                                                                                                                                  | M3     |      |         |
+| papers/mathematics-11-03947-v2.pdf                                                                                                                                                                                                                                     | M9     |      |         |
+| papers/potential_well.pdf                                                                                                                                                                                                                                              | M3     |      |         |
+| papers/proof_operators.pdf                                                                                                                                                                                                                                             | M3     |      |         |
+| papers/A Survey on Kolmogorov-Arnold Network.pdf | M7 | |  |
+| papers/A Survey on Diffusion Models for Time Series and Spatio-Temporal Data.pdf | M5 | |  |
+| papers/A brief review of quantum machine learning techniques for financial services.pdf | M8 | |  |
+| papers/Assessment - July 3rd - Modules 4, 5 and 6_ Attempt review _ Ca' Foscari.pdf |  | | false |
+| papers/Assessment - May 22nd - Modules 1, 2, 3_ Attempt review _ Ca' Foscari.pdf |  | | false |
+| papers/Diffusion Models in Finance: A Survey.pdf | M8 | |  |
+| papers/QuKAN: A Quantum Circuit Born Machine Approach to Quantum Kolmogorov Arnold Networks.pdf | M7 | |  |
+| papers/Quantum Machine Learning A Hands-on Tutorial for Machine Learning Practitioners and Researchers.pdf |  | | false |
+| papers/Quantum Machine Learning Fraud Detection Project Achieves Key Technical Milestones.pdf | M7 | |  |
+| papers/Quantum-Inspired Hybrid Machine Learning Framework for Scalable Computational Next-Generation Technologies.pdf | M7 | |  |
+| slides/002_AI_INTRO.pdf                                                                                                                                                                                                                                                | M2     |      |         |
+| slides/003_Machine_Learning_supervised_unsupervised.pdf                                                                                                                                                                                                                | M2     |      |         |
+| slides/004_Classification copia.pdf                                                                                                                                                                                                                                    | M2     |      |         |
+| slides/005_01_Clustering copia.pdf                                                                                                                                                                                                                                     | M2     |      |         |
+| slides/20260905_Algorithms_Foundations_CFCS.pptx.pdf                                                                                                                                                                                                                   | M7     |      |         |
+| slides/20260911_Circuit_Design_Embeddings_Frameworks_CFCS.pptx.pdf                                                                                                                                                                                                     | M7     |      |         |
+| slides/20260912_Classification_Applications_Limits_CFCS.pptx.pdf                                                                                                                                                                                                       | M7     |      |         |
+| slides/CaFoscariQML - ClassificationToDetection (1).pdf                                                                                                                                                                                                                | M2     |      |         |
+| slides/FCaruso_From Quantum Computing to Quantum AI_2026.pdf                                                                                                                                                                                                           | M4     |      |         |
+| slides/Ligorio_DLMLBasics_MQML_CaFoscari.pdf                                                                                                                                                                                                                           | M2     |      |         |
+| slides/Master_Ca_Foscari 2026 - Luca Crippa.pdf                                                                                                                                                                                                                        | M6     |      |         |
+| slides/Master_Ca_Foscari 2026 - Tommaso Fioravanti.pdf                                                                                                                                                                                                                 | M6     |      |         |
+| slides/Master_QUANTUM_MACHINE_LEARNING-CORAZZA-Preliminaries-Slides.pdf                                                                                                                                                                                                | M1     |      |         |
+| slides/PCA.pdf                                                                                                                                                                                                                                                         | M2     |      |         |
+| slides/QML Master Executive 2026.pdf                                                                                                                                                                                                                                   | M6     |      |         |
+| slides/Shor.pdf                                                                                                                                                                                                                                                        | M6     |      |         |
+| slides/Slides_Fasano_QML_2025-2026.pdf                                                                                                                                                                                                                                 | M1     |      |         |
+| slides/Slides_master_QML1.pdf                                                                                                                                                                                                                                          | M3     |      |         |
+| slides/Slides_master_QML2.pdf                                                                                                                                                                                                                                          | M3     |      |         |
+| slides/deep-learning (final version).pptx                                                                                                                                                                                                                              | M2     |      |         |
+| slides/deep-learning.pptx                                                                                                                                                                                                                                              | M2     |      | false   |
+| slides/hierarchical clustering.pdf                                                                                                                                                                                                                                     | M2     |      |         |
+| slides/introduction ML.pdf                                                                                                                                                                                                                                             | M2     |      |         |
+| slides/lect2_probability.pdf                                                                                                                                                                                                                                           | M1     |      |         |
+| slides/lect3_correlation.pdf                                                                                                                                                                                                                                           | M1     |      |         |
+| slides/lect4_sampling.pdf                                                                                                                                                                                                                                              | M1     |      |         |
+| slides/lect5_testing.pdf                                                                                                                                                                                                                                               | M1     |      |         |
+| slides/lezione2.pdf                                                                                                                                                                                                                                                    | M4     |      |         |
+| slides/slides of lesson QML 2025.pdf                                                                                                                                                                                                                                   | M6     |      |         |
+| slides/slides1.pdf                                                                                                                                                                                                                                                     | M4     |      |         |
+| slides/slidesGM.pdf                                                                                                                                                                                                                                                    | M4     |      |         |
+| slides/slidesML2.pdf                                                                                                                                                                                                                                                   | M2     |      |         |
+| slides/whiteboard1.pdf                                                                                                                                                                                                                                                 | M4     |      |         |
+| slides/whiteboard3.pdf                                                                                                                                                                                                                                                 | M4     |      |         |
+| slides/whiteboard4.pdf                                                                                                                                                                                                                                                 | M5     |      |         |
+| transcripts/01 – Foundations_ From Neural Networks to Quantum Circuits.docx | M7 | | |
+| transcripts/01 – Foundations_ Quantum Hardware, Computational Complexity and the Qubit.docx | M4 | | |
+| transcripts/01 – IBM Quantum_ Roadmap, Hardware, Qiskit and Cloud Access.docx | M6 | | |
+| transcripts/01 – Noise, Quantum Process Tomography and Randomized Benchmarking.docx | M6 | | |
+| transcripts/02 – Hybrid Workflows, MaxCut and QUBO, and Neutral Atom Hardware.docx | M7 | | |
+| transcripts/02 – Privacy and Data Protection under the GDPR.docx | M1 | | |
+| transcripts/02 – Quantum Error Correction, Fault Tolerance and Shadow Estimation.docx | M6 | | |
+| transcripts/02 – Shor, Grover and Variational Algorithms.docx | M6 | | |
+| transcripts/02 – The Bloch Sphere, Quantum Gates, Observables and Noise.docx | M4 | | |
+| transcripts/03 – Ansatz Design and Encoding Strategy.docx | M7 | | |
+| transcripts/03 – Exercise Session_ Gates, Tensor Products and Expected Values.docx | M4 | | |
+| transcripts/03 – IBM Quantum Offerings, Use Cases and Quantum-Safe Cryptography.docx | M6 | | |
+| transcripts/04 – Correlation Observables, Simulators vs Emulators, and QuTiP.docx | M4 | | |
+| transcripts/04 – Frameworks_ PennyLane, Qiskit, and Hybrid PyTorch Models.docx | M7 | | |
+| transcripts/04 – Industry Applications and Qiskit Notebooks.docx | M6 | | |
+| transcripts/05 – Classical Data Encoding, Image Encoding and Quantum ML Models.docx | M4 | | |
+| transcripts/05 – Implementing Deutsch, Deutsch–Jozsa and Grover in Qiskit.docx | M4 | | |
+| transcripts/05 – The Full Classification Pipeline_ Iris, Quantum Kernels and ML Methodology.docx | M7 | | |
+| transcripts/06 – Finance Applications, Published Case Studies and Drug Discovery.docx | M7 | | |
+| transcripts/06 – Grover Sudoku, Quantum Noise Channels, and Classical Generative Models.docx | M4 | | |
+| transcripts/07 – Neutral Atom Hardware_ Physics, Industry and Engineering.docx | M7 | | |
+| transcripts/07 – Quantum Autoencoders, Quantum GANs and Diffusion Models.docx | M4 | | |
+| transcripts/08 – Programming Neutral Atoms_ Pulser, PennyLane and Cross-Modality Benchmarks.docx | M7 | | |
+| transcripts/08 – Quantum Diffusion Models and Introduction to PennyLane.docx | M5 | | |
+| transcripts/09 – Business Cases, NISQ Limits, Barren Plateaus, and Introduction to Annealing.docx | M7 | | |
+| transcripts/09 – Hybrid Models in PennyLane and PyTorch, and a Quantum GAN.docx | M5 | | |
+| transcripts/10 – Quantum Annealing_ Josephson Junctions, the Adiabatic Theorem and QUBO.docx | M7 | | |
+| transcripts/10 – The Machine Learning Pipeline and the Project Laboratory (Morning).docx | M5 | | |
+| transcripts/11 – The Project Laboratory_ Quanvolutional Results and Three Group Approaches (Afternoon).docx | M5 | | |
+
 ## The transcripts carry no module in their path
 
-Thirty Word exports, named after the lecturer and nothing else, so neither
-module rule fires: there is no `M<n>` in the path and no date either. They are
-placed here by the same evidence the decks were — **the timetable says which
-module each lecturer teaches**. Caruso and Onorati, Crippa, Zarbo and Bernes
+Twenty-nine Word write-ups, named `NN – <lesson title>`, so neither module rule
+fires: there is no `M<n>` in the path and no date either. The lecturer is not in
+the name but on the first line of each file (`Lecturer: …`, `Source transcript:
+ZARBO_03`). They are placed here by the same evidence the decks were — **the
+timetable says which module each lecturer teaches**. Caruso and Onorati, Crippa, Zarbo and Bernes
 each teach one module, so those are settled by the name alone.
 
 Martina teaches two, M4 and M5, so his eleven files are split by what they are
@@ -227,12 +237,12 @@ are for, since they record what was actually asked.
 
 ## Disabled, and why
 
-| path | why |
-|---|---|
-| `books/Landau. Lifshitz ...` | 1,144 pages of graduate theory against a 24-hour introductory module |
-| `books/Landau_Lifshitz_T2_short.pdf` | same reason |
-| `slides/deep-learning.pptx` | same deck as `deep-learning (final version).pptx`: 81 slides and 17,807 characters of text, identical in both |
-| `code/README.md` | 79 bytes, a title and one line |
+| path                                 | why                                                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `books/Landau. Lifshitz ...`         | 1,144 pages of graduate theory against a 24-hour introductory module                                          |
+| `books/Landau_Lifshitz_T2_short.pdf` | same reason                                                                                                   |
+| `slides/deep-learning.pptx`          | same deck as `deep-learning (final version).pptx`: 81 slides and 17,807 characters of text, identical in both |
+| `code/README.md`                     | 79 bytes, a title and one line                                                                                |
 
 Flip `enabled` to `true` and the next ingest picks the file up. It is one word.
 
@@ -258,17 +268,17 @@ silence. The html files are exports of notebooks that are indexed anyway.
 From the course timetable, parsed by `studykb`. `kb_outline M8` prints any of
 them lecture by lecture.
 
-| id | module | teachers | sources |
-|---|---|---|---|
-| M1 | Preliminaries | Corazza, Raggi, Fasano, Pesenti, Bernes | 9 |
-| M2 | Classical Machine Learning | Minello, Ligorio, Di Matteo, De Marinis, Federici | 39 |
-| M3 | Introduction to Quantum Mechanics | Droghetti | 21 |
-| M4 | From Quantum Computing to Quantum AI | Martina, Caruso | 11 |
-| M5 | Towards QML applications | Martina | 8 |
-| M6 | Real Quantum Processors | Crippa, Galatro, Onorati | 16 |
-| M7 | Quantum Machines Deep Learning | Zarbo | 10 |
-| M8 | Quantum Machine Learning for Finance | Corazza, Fasano, Raggi, De Nobili, Costola | **0** |
-| M9 | Quantum Applications | Fasano, Leone, Ferrara | 4 |
+| id  | module                               | teachers                                          | sources |
+| --- | ------------------------------------ | ------------------------------------------------- | ------- |
+| M1  | Preliminaries                        | Corazza, Raggi, Fasano, Pesenti, Bernes           | 9       |
+| M2  | Classical Machine Learning           | Minello, Ligorio, Di Matteo, De Marinis, Federici | 39      |
+| M3  | Introduction to Quantum Mechanics    | Droghetti                                         | 21      |
+| M4  | From Quantum Computing to Quantum AI | Martina, Caruso                                   | 11      |
+| M5  | Towards QML applications             | Martina                                           | 8       |
+| M6  | Real Quantum Processors              | Crippa, Galatro, Onorati                          | 16      |
+| M7  | Quantum Machines Deep Learning       | Zarbo                                             | 10      |
+| M8  | Quantum Machine Learning for Finance | Corazza, Fasano, Raggi, De Nobili, Costola        | **0**   |
+| M9  | Quantum Applications                 | Fasano, Leone, Ferrara                            | 4       |
 
 **M8 is the only empty module, and it is the 8-CFU one.** Corazza teaches its
 first lecture on 12 October. Transcripts are still missing everywhere.
