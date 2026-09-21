@@ -302,6 +302,9 @@ uv run studykb review --corpus qml-master --root ~/Personale/QML/kb
 
 Only the new files are processed. Everything already indexed is left alone.
 
+Every ingest rewrites `vault/SOURCES.md`: each file, grouped by module, with its
+chunk count and the date it was indexed.
+
 ---
 
 ## Starting over from zero

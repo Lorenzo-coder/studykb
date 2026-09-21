@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from fnmatch import fnmatch
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -227,6 +228,7 @@ def ingest(
             m.items = report.stages.get(name, 0)
             m.errors = len(report.errors) - before_errors
         run.save(st.conn)
+        _write_sources(cfg, modules, st, {s.rel for s in sources}, log)
 
     return report
 
@@ -475,6 +477,33 @@ def _load_calendar(cfg: Config, corpus: Corpus, log) -> list[cal.Module]:
         log(f"[calendar] {path} not found — modules and glossary will be empty")
         return []
     return cal.parse(path, corpus.calendar)
+
+
+def _write_sources(cfg: Config, modules: list[cal.Module], st: State, present: set[str], log) -> None:
+    """Rewrite SOURCES.md: every known file, grouped by module, with its chunk count."""
+    rows = st.conn.execute(
+        "SELECT s.source, s.type, s.module, e.output_ref, e.done_at FROM seen_sources s"
+        " LEFT JOIN stage_state e ON e.source = s.source AND e.stage = 'embed'"
+        " ORDER BY s.module IS NULL, s.module, s.type, s.source"
+    ).fetchall()
+    titles = {m.id: m.title for m in modules}
+    indexed = sum(1 for r in rows if r[3] is not None and r[0] in present)
+    lines = [f"# Indexed sources — {indexed} of {len(present)} files", "",
+             f"Rewritten by every `studykb ingest`. Last: {time.strftime('%Y-%m-%d %H:%M')}.", ""]
+    current = object()
+    for source, type_, module, chunks, done_at in rows:
+        if module != current:
+            current = module
+            lines += ["", f"## {module or 'No module'} {titles.get(module, '')}".rstrip(), "",
+                      "| file | type | chunks | indexed |", "|---|---|---:|---|"]
+        when = time.strftime("%Y-%m-%d", time.localtime(done_at)) if done_at else "—"
+        if source not in present:
+            when = "missing from disk"
+        lines.append(f"| {source} | {type_} | {chunks or '—'} | {when} |")
+    path = cfg.storage.vault / "SOURCES.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n")
+    log(f"[sources] {indexed} indexed -> {path}")
 
 
 def _write_syllabus(cfg: Config, modules: list[cal.Module], log) -> None:
