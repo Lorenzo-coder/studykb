@@ -43,8 +43,29 @@ class Hit:
         return f"{self.source_title} {self.locator}"
 
 
-def _filter(module: str | None, type_: str | None, terms: list[str] | None) -> models.Filter | None:
+def resolve_sources(client: QdrantClient, cfg: Config, fragment: str) -> list[str]:
+    """Indexed source paths containing ``fragment``, case-insensitive.
+
+    A fragment, not a path: nobody types a 120-character paper title. Matching
+    several files is allowed — ``exercise3`` means all three of them.
+    """
+    facet = client.facet(cfg.storage.collection, key="source", limit=10_000, exact=True)
+    found = matching([h.value for h in facet.hits], fragment)
+    if not found:
+        raise ValueError(f"no indexed source matches {fragment!r}")
+    return found
+
+
+def matching(sources: list[str], fragment: str) -> list[str]:
+    return sorted(s for s in sources if fragment.lower() in s.lower())
+
+
+def _filter(
+    module: str | None, type_: str | None, terms: list[str] | None, sources: list[str] | None = None
+) -> models.Filter | None:
     must: list[models.Condition] = []
+    if sources:
+        must.append(models.FieldCondition(key="source", match=models.MatchAny(any=sources)))
     if module:
         must.append(models.FieldCondition(key="module", match=models.MatchValue(value=module)))
     if type_:
@@ -63,9 +84,11 @@ def search(
     *,
     module: str | None = None,
     type_: str | None = None,
+    source: str | None = None,
     k: int | None = None,
 ) -> list[Hit]:
     k = k or cfg.retrieval.k_final
+    sources = resolve_sources(client, cfg, source) if source else None
     vector = llm.embed([query])[0]
     r = cfg.retrieval
 
@@ -73,8 +96,8 @@ def search(
         result = client.query_points(
             collection_name=cfg.storage.collection,
             prefetch=[
-                models.Prefetch(query=vector, filter=_filter(module, type_, None), limit=r.k_dense),
-                models.Prefetch(query=vector, filter=_filter(module, type_, terms), limit=r.k_lexical),
+                models.Prefetch(query=vector, filter=_filter(module, type_, None, sources), limit=r.k_dense),
+                models.Prefetch(query=vector, filter=_filter(module, type_, terms, sources), limit=r.k_lexical),
             ],
             query=models.FusionQuery(fusion=models.Fusion.RRF),
             limit=k,
@@ -84,7 +107,7 @@ def search(
         result = client.query_points(
             collection_name=cfg.storage.collection,
             query=vector,
-            query_filter=_filter(module, type_, None),
+            query_filter=_filter(module, type_, None, sources),
             limit=k,
             with_payload=True,
         )

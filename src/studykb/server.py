@@ -46,17 +46,25 @@ def build(cfg: Config, corpus: Corpus) -> FastMCP:
     by_id = {m.id: m for m in modules}
 
     @mcp.tool
-    def kb_search(query: str, module: str | None = None, type: str | None = None, k: int = 8) -> str:
+    def kb_search(
+        query: str, module: str | None = None, type: str | None = None,
+        source: str | None = None, k: int = 8,
+    ) -> str:
         """Search the study corpus.
 
         Returns passages with a citation and a provenance marker. `module` is an
-        id like "M8"; `type` is one of book, slides, paper, transcript, caption.
+        id like "M8"; `type` is one of book, slides, paper, transcript, caption;
+        `source` keeps only files whose path contains it, case-insensitive
+        ("Business Cases", "exercise3").
 
         Passages marked `provenance=local-vlm` are descriptions of a figure
         produced by a local vision model, not source text: cite them as
         descriptions and open the page for anything that must be exact.
         """
-        hits = search_mod.search(client, cfg, llm, query, module=module, type_=type, k=k)
+        try:
+            hits = search_mod.search(client, cfg, llm, query, module=module, type_=type, source=source, k=k)
+        except ValueError as e:
+            return str(e)
         return search_mod.format_hits(hits)
 
     @mcp.tool
@@ -99,7 +107,7 @@ def build(cfg: Config, corpus: Corpus) -> FastMCP:
             return JSONResponse({"error": "missing ?q="}, status_code=400)
         hits = search_mod.search(
             client, cfg, llm, query,
-            module=params.get("module"), type_=params.get("type"),
+            module=params.get("module"), type_=params.get("type"), source=params.get("source"),
             k=int(params.get("k", cfg.retrieval.k_final)),
         )
         return JSONResponse([h.__dict__ for h in hits])

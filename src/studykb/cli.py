@@ -271,6 +271,7 @@ def search(
     query: str = typer.Argument(...),
     module: str = typer.Option(None, "--module", "-m"),
     type_: str = typer.Option(None, "--type", "-t"),
+    source: str = typer.Option(None, "--source", "-s", help="Only files whose path contains this, case-insensitive"),
     k: int = typer.Option(None, "-k"),
     corpus: str = typer.Option(None, "--corpus", help="Needed only when the corpus has its own collection"),
     config: Path = typer.Option(None, "--config"),
@@ -278,7 +279,11 @@ def search(
     """Query the index from the shell."""
     cfg = _load(corpus, config)[0] if corpus else load_config(config)
     with LLM(cfg) as llm:
-        hits = search_mod.search(index.connect(cfg), cfg, llm, query, module=module, type_=type_, k=k)
+        try:
+            hits = search_mod.search(index.connect(cfg), cfg, llm, query,
+                                     module=module, type_=type_, source=source, k=k)
+        except ValueError as e:
+            raise typer.BadParameter(str(e), param_hint="--source") from e
     console.print(search_mod.format_hits(hits))
 
 
