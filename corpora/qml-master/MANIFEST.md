@@ -106,8 +106,6 @@ source.
 | papers/A Survey on Kolmogorov-Arnold Network.pdf | M7 | |  |
 | papers/A Survey on Diffusion Models for Time Series and Spatio-Temporal Data.pdf | M5 | |  |
 | papers/A brief review of quantum machine learning techniques for financial services.pdf | M8 | |  |
-| papers/Assessment - July 3rd - Modules 4, 5 and 6_ Attempt review _ Ca' Foscari.pdf |  | | false |
-| papers/Assessment - May 22nd - Modules 1, 2, 3_ Attempt review _ Ca' Foscari.pdf |  | | false |
 | papers/Diffusion Models in Finance: A Survey.pdf | M8 | |  |
 | papers/QuKAN: A Quantum Circuit Born Machine Approach to Quantum Kolmogorov Arnold Networks.pdf | M7 | |  |
 | papers/Quantum Machine Learning A Hands-on Tutorial for Machine Learning Practitioners and Researchers.pdf |  | | false |
