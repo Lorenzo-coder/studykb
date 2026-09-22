@@ -43,6 +43,35 @@ corrispondente nel piano prima di fare altro.
 
 Il terminale è il posto del dialogo. Il browser è il posto della lettura.
 
+## La chat della pagina
+
+La pagina `http://127.0.0.1:8077/read` ha una chat. Quello che l'utente scrive
+lì finisce in `~/Personale/QML/vault/.chat.jsonl`, una riga JSON per messaggio,
+e **nient'altro**: il server non lo inoltra a nessuno. Se la sessione non
+ascolta il file, il messaggio resta lì senza risposta.
+
+**Primo passo di ogni sessione, prima di tutto il resto:**
+
+1. **Guarda se c'è un messaggio in attesa.** `tail -n 1` del file: se l'ultima
+   riga ha `"who": "you"`, è una domanda rimasta senza risposta. Parti da quella.
+2. **Avvia l'ascolto** con il tool Monitor (caricalo con ToolSearch se è
+   differito):
+   ```bash
+   tail -n 0 -F ~/Personale/QML/vault/.chat.jsonl | grep --line-buffered '"who": "you"'
+   ```
+   `-n 0` è voluto: arrivano solo i messaggi nuovi, mai lo storico. Rileggere il
+   file intero a ogni messaggio costerebbe token per niente.
+3. **Rispondi sulla pagina**, non in terminale, quando la domanda arriva da lì.
+   Scrivi la risposta in un file nello scratchpad e mandala così, per non
+   combattere con le virgolette:
+   ```bash
+   curl -s -X POST 'http://127.0.0.1:8077/chat?who=claude' --data-binary @risposta.md
+   ```
+   Le regole del dialogo valgono uguali: URL della nota, riassunto, tre domande.
+   Diversamente dal terminale, la chat della pagina rende Markdown **e** LaTeX
+   (KaTeX, `$...$` e `$$...$$`): la regola "solo Unicode" vale per il
+   terminale, non qui.
+
 ## Lo stile della spiegazione
 
 Questa è la parte che conta di più. Il modello da imitare è questo, scelto
