@@ -22,6 +22,7 @@ uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb
 uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb --only vision  # only after a full run
 uv run studykb review --corpus qml-master --root ~/Personale/QML/kb
 uv run studykb search "variational circuit" -m M4
+uv run studykb search "barren plateaus" -s "business cases"   # one file, by part of its name
 uv run studykb stats  --corpus qml-master          # what past runs cost
 uv run pytest
 ```

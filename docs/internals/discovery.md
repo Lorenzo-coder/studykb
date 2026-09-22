@@ -55,6 +55,11 @@ An override can change the **type**, not just the module. A file reclassified as
 `slides` also gets `vision: force`, because an override that only half applies
 is worse than none.
 
+`enabled: false` keeps a file out of discovery, and that is all it does. If the
+file was indexed before, its chunks stay in the collection and keep turning up
+in search; `review` does not see them either, because it only walks discovered
+sources. Drop them with `studykb forget <path>`.
+
 ### 4. Module assignment
 
 `_module_for` walks `module_rules` in order and takes the first hit:

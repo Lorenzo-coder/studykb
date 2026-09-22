@@ -9,7 +9,7 @@ without it studykb would be an application that only talks to itself.
 
 | tool | returns |
 |---|---|
-| `kb_search(query, module, type, k)` | passages, each with citation and provenance |
+| `kb_search(query, module, type, source, k)` | passages, each with citation and provenance |
 | `kb_outline(module)` | a module's lecture-by-lecture outline, from the timetable |
 | `kb_lecture(date)` | what was taught on a date: module, topic, teacher |
 | `kb_sources()` | modules, teachers, and chunks indexed per module |
@@ -20,7 +20,9 @@ its context**. That rule is the actual cost control, and it is written into
 expensive mistake available here.
 
 `kb_search`'s docstring tells the calling model that `provenance=local-vlm`
-passages are descriptions of figures, not source text. The docstring is the only
+passages are descriptions of figures, not source text. `source` is a fragment of
+the path, resolved against the indexed sources with a facet query; a fragment
+that matches nothing returns an error instead of an empty result. The docstring is the only
 place that instruction reaches a model calling the tool.
 
 ## HTTP alongside

@@ -215,10 +215,14 @@ If one fails, open the file that answers it:
 | Is a figure description wrong? | `captions.md` |
 | Does search find the right passage? | `retrieval.md` |
 
-Two columns in the table are worth knowing:
+Four columns in the table are worth knowing:
 
 - **pages** reads `with-text / total`. `0/137` means a document produced no text
   at all — usually a scan needing OCR, or a deck flattened to images.
+- **ch/pg** is characters per page. Books and papers run 1,500-8,000, slides
+  200-700; `0` means no text layer. For a transcript a "page" is a section.
+- **cap** is how many pages the vision model described. Slides only; where
+  `ch/pg` is 0 the captions are the only thing that makes those pages findable.
 - **chunks** shows one number normally. Two numbers mean something was lost.
 
 ---
@@ -237,6 +241,7 @@ Options:
 |---|---|
 | `--module M4` | only that module |
 | `--type book` | only books. Also: `slides`, `paper`, `transcript`, `caption` |
+| `--source "business cases"` | only files whose path contains that text, case-insensitive. Several matches are all searched: `-s exercise3` covers 3.1, 3.2 and 3.3 |
 | `-k 5` | how many passages to return |
 
 Each result shows where it came from and how it was obtained:
