@@ -133,6 +133,10 @@ source.
 | papers/What is Quantum Annealing.pdf | M7 | |  |
 | papers/QUBOs and Ising Models.pdf | M7 | |  |
 | papers/Minor Embedding.pdf | M7 | |  |
+| papers/Exponential concentration in quantum kernel methods.pdf | M7 | |  |
+| papers/Predicting Many Properties of a Quantum System from Very Few Measurements.pdf | M6 | |  |
+| papers/Quantum Computing in the NISQ era and beyond.pdf | M7 | |  |
+| papers/Quantum autoencoders for efficient compression of quantum data.pdf | M4 | |  |
 | papers/Conventions — Pulser 1.9.1 documentation.pdf | M7 | |  |
 | papers/Programming a neutral-atom QPU — Pulser 1.9.1 documentation.pdf | M7 | |  |
 | papers/Pulser — Pulser 1.9.1 documentation.pdf | M7 | |  |
