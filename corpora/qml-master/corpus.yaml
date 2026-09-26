@@ -42,11 +42,57 @@ sources:
     vision: force             # slides carry meaning in figures; always caption
   - glob: "slides/**/*.pptx"
     type: slides
+  # Written for the course, filed with the books and papers: handouts, lecture
+  # notes, exercises, the exam reviews, notes rewritten from the lectures. They
+  # say what was taught, so they are course, not literature. Authority otherwise
+  # follows the type — book and paper are reference, everything else course.
+  - glob: "books/Handouts__*.pdf"
+    type: book
+    authority: course
+    vision: never
+  - glob: "books/QuickIntroToPython.pdf"
+    type: book
+    authority: course
+    vision: never
+  - glob: "papers/Assessment*.pdf"
+    type: paper
+    authority: course
+    vision: never
+  - glob: "papers/exercise*.pdf"
+    type: paper
+    authority: course
+    vision: never
+  - glob: "papers/[lL]ecture*.pdf"
+    type: paper
+    authority: course
+    vision: never
+  - glob: "papers/potential_well.pdf"
+    type: paper
+    authority: course
+    vision: never
+  - glob: "papers/proof_operators.pdf"
+    type: paper
+    authority: course
+    vision: never
+  - glob: "papers/complex_numbers.pdf"
+    type: paper
+    authority: course
+    vision: never
+  - glob: "papers/ML Notes*.pdf"
+    type: paper
+    authority: course
+    vision: never
   # Vision is off for prose. Measured on this corpus: on books the auto
   # trigger only ever fires on covers, title pages and blanks — the low-text
   # pages — while real figures sit on pages full of surrounding text. Worse,
   # on a cover the 7B model pattern-completes from the title and invents a
   # circuit diagram that was never there. Captioning prose is net-negative.
+  # Pilot, 26/09/2026, closed: captions forced on one web-printed framework
+  # guide (PennyLane "Quantum models as Fourier series"). 7 of 23 pages captioned;
+  # nothing invented, but every caption restated the page text or the code
+  # ("a blue line"), missed the one fact a plot carried, and one said "No
+  # figure" after describing it. No gain over the text layer: guides stay
+  # vision: never, like the other papers.
   - glob: "books/**/*.pdf"
     type: book
     vision: never

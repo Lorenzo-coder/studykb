@@ -1,6 +1,6 @@
 # Where this is right now
 
-Last updated: 2026-09-22 (transcripts indexed). Read this first when resuming.
+Last updated: 2026-09-26 (authority split, QBoost and two M7 decks indexed). Read this first when resuming.
 
 > **Next session — agreed, ready to start.** Jump to [Next session](#next-session).
 
@@ -96,6 +96,21 @@ in MANIFEST.md, which forces captioning regardless of any other threshold.
 
 ## Decisions already made
 
+- **Framework guides are not captioned** (26 September). Qiskit, PennyLane,
+  D-Wave and Pulser guides printed from the web (24 PDFs, M5-M7) have a full
+  text layer, so no OCR. A vision pilot on one PennyLane demo produced captions
+  that only restated the text or the code; the rule was removed (see
+  `corpus.yaml`). Fixed on the way: `_chunks_for` re-indexed a captions file
+  even after vision was switched off for the source; it now reads captions only
+  when the vision stage applies. Test: `test_captions_left_behind_by_a_vision_rule_are_not_indexed`.
+
+- **ASR cleanup skips cleaned prose** (26 September). Every QML transcript is a
+  Word report already written as prose; the cleanup model damaged about 40 of
+  331 windows and swapped terms in many more. Prose windows (`¶` locators) now
+  pass through as `text-layer`; real captions keep the model, behind a word
+  similarity guard. Details in `docs/internals/enrichment.md`. The transcripts
+  were re-embedded the same day and the notes citing them reviewed.
+
 | | |
 |---|---|
 | Package manager | uv, everywhere, including the Dockerfile. Never pip |
@@ -151,7 +166,7 @@ of three places, chosen by what changing it does:
 |---|---|---|
 | `config/default.yaml` | what gets indexed, and what a review check decides | `min_graphics`, `chunk.target_tokens`, `review.tiny_chunk_chars` |
 | `src/studykb/limits.py` | how much a report prints before it truncates | `VANISHED_LISTED`, `RETRIEVAL_PASSAGE` |
-| a constant at the top of its module | one value used only there | `CHARS_PER_TOKEN`, `MAX_GROWTH`, `_BOILERPLATE_SHARE` |
+| a constant at the top of its module | one value used only there | `CHARS_PER_TOKEN`, `MIN_SIMILARITY`, `_BOILERPLATE_SHARE` |
 
 The last section of `limits.py` is fenced off: `FINGERPRINT_CHARS`,
 `WORK_SHA_CHARS`, `WORK_STEM_CHARS` are key lengths already written into
@@ -232,48 +247,25 @@ before the 16th. Module 8 assessment is 7 November.
 
 Two pieces of work, both decided. Do them in this order.
 
-### 1. Split the index by authority
+### 1. Split the index by authority — done, 26 September
 
-**The problem.** Lecture material and reference material carry the same weight
-in search results. A lecturer speaking off the cuff, and an automatic subtitle
-on top of that, can be wrong. A textbook is not. And separately: knowing
-whether a topic was *covered in the course* is what decides whether it is on
-the exam.
+Every chunk carries `authority`: `reference` (books, papers) or `course`
+(what was taught). It follows the type unless a `corpus.yaml` rule sets it:
+the handouts, lecture notes, exercises, exam reviews and `ML Notes` filed
+under `books/` and `papers/` are course. 25 sources reference, 133 course;
+4,018 and 3,708 chunks.
 
-**The design, agreed.** One index, not two. A new `authority` field on every
-chunk:
+`search -a reference|course`, the same argument on `kb_search`, and
+`kb_crosscheck(topic)`, which runs both sides and labels them. Gate passed on
+the real index: `kb_crosscheck("Grover")` returns the July assessment, Caruso
+p.85 and GroverTutorial on the course side, Schuld p.140-141 and Nielsen &
+Chuang on the reference side; `-a reference` returns only books and papers.
 
-| value | sources |
-|---|---|
-| `reference` | books, papers |
-| `course` | slides, transcripts, captions |
-
-**Slides count as `course`** — decided. They are written and reviewed, so more
-reliable than a recording, but for the question "is this on the syllabus?" they
-are course material.
-
-Two separate collections were considered and rejected: two searches per
-question, scores that cannot be ranked together, and every piece of
-infrastructure doubled. The `type` field already separates the data; what is
-missing is a single axis and a tool that compares across it.
-
-**To build:**
-
-1. `authority` on `SourceRule` in `config.py`, declared per glob in
-   `corpus.yaml`, defaulting from the type (book/paper → reference, everything
-   else → course).
-2. Carry it into the chunk payload (`types.py::Chunk.payload`) and add it to
-   `index.KEYWORD_FIELDS` so it can be filtered.
-3. `--authority` on `studykb search`, and the same argument on `kb_search`.
-4. A new MCP tool `kb_crosscheck(topic)`: searches both sides and returns them
-   labelled, so an answer can read *"covered in the course on 29/05, slides
-   23-27; the textbook confirms it at Nielsen & Chuang p.72"* — or *"not
-   covered in the course; present in Schuld ch. 8, probably out of scope"*.
-5. Bump the embed fingerprint: the payload changes, so everything reindexes
-   (~15 min).
-
-**Gate:** `kb_crosscheck("Grover")` must return both sides labelled correctly,
-and `search --authority reference` must return no slides or transcripts.
+Run `587e1fe3cc3b`: 158 sources, **7,726 chunks**, 14m11s, review green. Only
+embed re-ran on the old sources — the new field is in the embed fingerprint,
+nothing upstream changed. Added in the same run: QBoost (4 code files from
+`dwave-examples/qboost`, Neven 2008 and 2012), shown by Zarbo on 25/09, and
+the M7 decks of 18/09 and 19/09.
 
 ### 2. Produce one module's notes as a format sample
 
@@ -291,10 +283,8 @@ A worked example of the intended shape, from a live `kb_search` on M4:
 > **The result.** Classically ~N operations; the quantum algorithm needs ~√N. [p.72]
 > **Careful.** Quadratic speedup, not exponential. Shor is exponential, Grover is not. [p.72]
 
-### Also queued
-
-The re-ingest described above — run it first, since both tasks need a current
-index.
+`papers/Quantum Machine Learning A Hands-on Tutorial…pdf`, a duplicate of the
+copy in `books/`, was deleted from disk and forgotten from the index.
 
 ---
 

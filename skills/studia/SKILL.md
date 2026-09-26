@@ -13,35 +13,71 @@ argomenti insieme.
 `~/Personale/QML/vault/00-syllabus/00-PIANO-DI-STUDIO.md`
 
 Contiene 184 argomenti, ognuno con un codice (`A1`, `C15`, `F5`, `H12`, ...).
-Il codice porta con sé il modulo e la fonte principale. Se l'utente dice un
+Il codice porta con sé il modulo e la fonte del corso. Se l'utente dice un
 codice, parti da lì. Se dice un argomento a parole, cerca la riga
 corrispondente nel piano prima di fare altro.
 
+## Due livelli di fonti
+
+La kb è divisa in due, e i due livelli hanno ruoli diversi.
+
+**Gold: libri e paper** (`type="book"`, `type="paper"`). Sono il patrimonio da
+cui si prende il contenuto. La spiegazione si costruisce su di loro,
+rielaborata, non parafrasata frase per frase. Possono andare oltre il corso: va
+bene, purché si dica che è oltre.
+
+**Corso: slide e trascrizioni** (`type="slides"`, `type="transcript"`). Servono
+a due cose sole. Primo, non lasciare indietro niente di quello che è stato
+fatto a lezione. Secondo, non gonfiare la nota con cose che il corso non ha
+toccato e che non servono all'argomento. Da qui si prende anche la notazione
+usata dal docente, se diversa da quella del libro.
+
+**Eccezione da ricordare.** In `papers/` ci sono anche dispense e materiale dei
+docenti: `Lecture4 (spins_and_qubits)`, `lectures_master_spin_qubit`,
+`lecture_angular_momentum`, `lecture_QM_formalism`, `lectures_formalism1`,
+`potential_well`, `proof_operators`, `complex_numbers`, `exercise*`,
+`exercises*`, `Assessment*`. Risultano `type="paper"` e restano così: le
+dispense sono affidabili e valgono come gold, citate come "dispensa <autore>".
+Gli `Assessment` sono domande d'esame: si usano al passo 4, non come contenuto.
+
 ## La procedura
 
-1. **Trova l'argomento nel piano.** Prendi il modulo (`M4`, `M7`, ...) e la
-   fonte indicata fra parentesi graffe.
-2. **Cerca**: `kb_search "<argomento>" module="<Mn>" k=8`. Al massimo otto
-   passaggi. Se otto non bastano, l'argomento è troppo largo: dillo all'utente
-   e proponi di spezzarlo in due.
-3. **Se il materiale è magro**, una seconda ricerca con `type="transcript"`.
-   Spesso il docente dice a voce la cosa che la slide si limita a nominare.
-4. **Scrivi la nota** in `vault/10-modules/<Mn>/<NN>-<slug>.md`, seguendo
-   `studykb/docs/agents/note-synthesis.md`. La spiegazione completa va **qui**,
-   nello stile descritto sotto, con LaTeX vero per le formule. Il terminale non
-   rende LaTeX, il viewer sì.
-5. **In terminale**, in quest'ordine e niente altro:
+1. **Trova l'argomento nel piano.** Prendi il modulo e la fonte del corso.
+2. **Gold**: `kb_search "<argomento>" type="book" k=8`, **senza** filtro di
+   modulo: un libro può trattare l'argomento anche se è assegnato a un altro
+   modulo. Nielsen & Chuang, Schuld & Petruccione e le dispense sono i primi da
+   guardare. Se serve, una seconda ricerca con `type="paper"`.
+3. **Corso**: `kb_search "<argomento>" module="<Mn>" k=8` per sapere cosa è
+   stato fatto a lezione e con quale notazione. Una ricerca `type="transcript"`
+   solo se le slide sono magre.
+4. **Esame**: se l'argomento è di un modulo già esaminato (M1–M6),
+   `kb_search "<argomento>" source="Assessment" k=4`. Le domande vere d'esame
+   dicono cosa il corso considera essenziale.
+5. **Se la nota esiste già** (dal 26/09/2026 esistono quelle di tutti i blocchi
+   del calendario, con le domande in fondo), non riscriverla: rileggila, dai
+   l'URL e parti dalle sue "Domande di verifica". Correggila solo se le
+   risposte mostrano che non è chiara (passo 8).
+   **Altrimenti scrivi la nota** in `vault/10-modules/<Mn>/<NN>-<slug>.md`, con la
+   struttura descritta sotto, e con una figura se una fonte ne ha una (vedi
+   "Le figure"). Questa struttura prevale su
+   `studykb/docs/agents/note-synthesis.md`.
+6. **Rispondi dove è arrivata la domanda.** Se l'utente ha scritto in terminale,
+   rispondi in terminale. Se ha scritto nella chat della pagina, rispondi lì e
+   in terminale scrivi solo una riga con l'URL. Il contenuto della risposta è
+   sempre questo, in quest'ordine e niente altro:
    - l'URL della nota, `http://127.0.0.1:8077/read#/10-modules/<Mn>/<NN>-<slug>.md`
-   - un riassunto da cinque a otto righe, in notazione Unicode
+   - un riassunto da cinque a otto righe
    - una riga che dice cosa c'è nella nota e non nel riassunto
-   - **tre domande di verifica**
+   - **tre domande di verifica**, di cui almeno una sulla realizzazione fisica
+     e, se esiste, una nello stile delle domande d'esame
    Poi fermati e aspetta. Non rispondere tu.
-6. **Se le risposte sono giuste**, spunta la casella nel piano. La nota c'è già.
-7. **Se le risposte sono sbagliate**, non ripetere la stessa spiegazione con
+7. **Se le risposte sono giuste**, spunta la casella nel piano.
+8. **Se le risposte sono sbagliate**, non ripetere la stessa spiegazione con
    parole diverse. Vuol dire che non era chiara: correggi **la nota** partendo
    da un esempio numerico, e ridai l'URL.
 
-Il terminale è il posto del dialogo. Il browser è il posto della lettura.
+Budget: al massimo otto passaggi per ricerca, al massimo quattro ricerche. Se
+non bastano, l'argomento è troppo largo: dillo e proponi di spezzarlo.
 
 ## La chat della pagina
 
@@ -61,155 +97,193 @@ ascolta il file, il messaggio resta lì senza risposta.
    ```
    `-n 0` è voluto: arrivano solo i messaggi nuovi, mai lo storico. Rileggere il
    file intero a ogni messaggio costerebbe token per niente.
-3. **Rispondi sulla pagina**, non in terminale, quando la domanda arriva da lì.
-   Scrivi la risposta in un file nello scratchpad e mandala così, per non
-   combattere con le virgolette:
+3. **Rispondi sulla pagina** quando la domanda arriva da lì. Scrivi la risposta
+   in un file nello scratchpad e mandala così, per non combattere con le
+   virgolette:
    ```bash
    curl -s -X POST 'http://127.0.0.1:8077/chat?who=claude' --data-binary @risposta.md
    ```
-   Le regole del dialogo valgono uguali: URL della nota, riassunto, tre domande.
-   Diversamente dal terminale, la chat della pagina rende Markdown **e** LaTeX
-   (KaTeX, `$...$` e `$$...$$`): la regola "solo Unicode" vale per il
-   terminale, non qui.
+   La chat della pagina rende Markdown **e** LaTeX (KaTeX, `$...$` e `$$...$$`):
+   la regola "solo Unicode" vale per il terminale, non qui.
 
-## Lo stile della spiegazione
+## Lo stile: la scuola di Landau
 
-Questa è la parte che conta di più. Il modello da imitare è questo, scelto
-dall'utente:
+Il modello è il Corso di fisica teorica di Landau e Lifshitz (i PDF sono in
+`kb/books/` ma esclusi dall'indice nel MANIFEST). Rigoroso, conciso, chiaro, niente lasciato al caso. In pratica:
 
-> ## L'algoritmo di Grover
->
-> **Il problema.** Hai un insieme di N elementi. Non sai come sono ordinati.
-> Devi trovare quello che ha una certa proprietà.
->
-> **Termine da fissare: oracolo.** È una funzione che, dato un elemento,
-> risponde soltanto "sì, è questo" oppure "no". Non ti dice dove si trova.
-> Riconoscere la soluzione è facile. Trovarla no.
->
-> **Quanto costa senza quantistica.** Non avendo struttura, devi provarli a uno
-> a uno. In media N/2 tentativi, nel caso peggiore N. [Nielsen & Chuang p.72]
->
-> **Quanto costa con Grover.** Servono circa √N iterazioni. Con N = 1.000.000
-> significa passare da un milione di tentativi a mille. [Nielsen & Chuang p.72]
->
-> **Attenzione a non confondere.** Il guadagno è quadratico, non esponenziale.
-> Shor è esponenziale. Grover no. [p.72]
+- **Si parte dal fatto fisico, non dalla formula.** Prima cosa si osserva, poi
+  l'oggetto matematico che lo descrive, poi le conseguenze. La matematica è
+  introdotta perché serve, e si dice a cosa serve.
+- **Ogni passaggio è giustificato.** Un risultato o si deriva, mostrando i
+  passaggi, o si cita. Mai "si può mostrare che" senza l'uno o l'altro.
+- **Niente di ridondante.** Ogni frase dice una cosa nuova. Niente ripetizioni
+  del titolo, niente annunci ("ora vedremo"), niente riassunti a metà testo.
+- **Definizioni precise**, date una volta sola, nel punto in cui servono, in un
+  blocco `**Definizione.**`. Ogni simbolo è definito prima di essere usato.
+- **Condizioni di validità scritte nel punto in cui valgono.** "Solo per stati
+  puri", "solo per un qubit", "solo per N grande": lì, non dopo.
+- **Equazioni numerate** (`\tag{1}`) quando vengono richiamate più avanti.
+- **Numeri concreti.** Dopo ogni risultato generale, un caso numerico che lo
+  rende tangibile.
 
-Le regole che ne discendono:
+Conciso non vuol dire allusivo. Un passaggio che il lettore deve ricostruire da
+solo va scritto. Chi legge non ha la base di matematica (la parte A del piano è
+saltata): i prerequisiti vanno richiamati in una riga dove servono.
 
-- **Paragrafi da due a quattro righe.** Ognuno si apre con un'etichetta in
-  grassetto che dice cosa c'è dentro.
-- **Frasi corte. Una affermazione per frase.** Se una frase contiene due idee,
-  diventano due frasi.
-- **Ogni termine tecnico va definito la prima volta che compare**, anche se
-  sembra ovvio. Usa l'etichetta `**Termine da fissare: <parola>.**`
-- **Numeri concreti invece delle formule**, quando si può. "Da un milione di
-  tentativi a mille" si capisce; "O(√N)" va scritto dopo, non prima.
-- **Ogni affermazione porta la sua citazione** fra parentesi quadre, sulla
-  stessa riga. Una frase che non puoi citare non va scritta.
-- **Chiudi con l'errore tipico da evitare**, quando ce n'è uno.
+**Modello da imitare** (tono e densità, non contenuto da copiare):
+
+> ### §1. Il fatto sperimentale
+>
+> Luce polarizzata a 45° incide su un polarizzatore orizzontale. Passa metà
+> dell'intensità: è la legge di Malus, $I = I_0\cos^2\theta$ con $\theta = 45°$.
+> Si riduca l'intensità fino a mandare un fotone alla volta. Un rivelatore dopo
+> il polarizzatore non registra mai "mezzo fotone": ogni fotone passa intero o
+> non passa. Su molti fotoni ne passa la metà.
+>
+> Ne segue che il singolo fotone non ha una polarizzazione orizzontale o
+> verticale già definita prima della misura. Ha soltanto una probabilità, 1/2,
+> di essere trovato orizzontale.
+>
+> ### §2. Lo stato
+>
+> **Definizione.** Lo stato di polarizzazione è un vettore
+> $|\psi\rangle = \alpha|H\rangle + \beta|V\rangle$ di uno spazio complesso a due
+> dimensioni, dove $|H\rangle$ e $|V\rangle$ sono le due polarizzazioni che il
+> polarizzatore distingue con certezza.
+>
+> La probabilità di trovare $H$ è $|\alpha|^2$. Poiché il fotone è trovato
+> sempre in uno dei due stati, $|\alpha|^2 + |\beta|^2 = 1$. Per il fotone a
+> 45°, $\alpha = \beta = 1/\sqrt2$, e $|\alpha|^2 = 1/2$ riproduce il §1.
+
+## La struttura della nota
+
+```markdown
+# <Argomento>
+
+> <Mn> · <docente> · piano <codice>
+
+**Prerequisiti.** <cosa si assume, una riga, con link alle note precedenti>
+
+## §1. <il fatto fisico o il problema da cui si parte>
+## §2. ... <sviluppo: definizioni, derivazioni, risultati, in ordine logico>
+
+## Realizzazione fisica
+<un sistema concreto: fotone, spin 1/2, atomo a due livelli, qubit
+superconduttore. Ogni oggetto matematico messo in corrispondenza con una cosa
+misurabile: cos'è lo stato, cos'è la base, cosa fa l'apparato di misura, che
+numeri escono. Con numeri.>
+
+## Esempio numerico
+<un calcolo svolto dall'inizio alla fine>
+
+## Nel corso
+<cosa è stato fatto a lezione, con quale notazione; cosa nella nota va oltre il
+corso; cosa hanno chiesto all'esame. Qui vanno le citazioni di slide e
+trascrizioni.>
+
+## Errore tipico
+## Domande aperte
+## Fonti
+<prima i gold, poi il corso>
+```
+
+La **realizzazione fisica** è obbligatoria per ogni argomento che descrive un
+sistema quantistico (parti D, E, G e, dove ha senso, F). Per gli argomenti
+puramente matematici o di ML si omette.
+
+## Le citazioni
+
+- **Poche e mirate.** Una citazione gold per risultato o per sezione, non una
+  per frase. Si citano i postulati, i fatti sperimentali, i risultati non
+  derivati nella nota. Un risultato derivato passo per passo nella nota non ha
+  bisogno di citazione: la derivazione è la sua prova.
+- **Slide e trascrizioni si citano solo nella sezione "Nel corso"**, tranne
+  quando il corso aggiunge qualcosa che nei gold non c'è.
+- **Nessuna affermazione inventata.** Ogni frase è citata, derivata nella nota,
+  oppure marcata `(fuori kb)` se è fisica standard assente dalla kb. `(fuori kb)`
+  è ammesso solo per la realizzazione fisica e per richiami di prerequisiti, e i
+  numeri devono essere esatti.
+
+## Le figure
+
+Una figura entra nella nota **solo se esiste già in una fonte**. Mai generarla,
+mai disegnarla: se non c'è, la nota resta senza.
+
+1. **Trovala.** Nei libri la legenda della figura è nel testo: cerca
+   `"Figure <argomento>"` con `source=` sul libro. Nelle slide cerca con
+   `type="caption"`: le didascalie del modello di visione dicono quali pagine
+   hanno un disegno.
+2. **Ritagliala** dalla directory `~/Personale/studykb`:
+   ```bash
+   uv run studykb figure "<parte del nome>" <pagina> --corpus qml-master --root ~/Personale/QML/kb
+   uv run studykb figure Nielsen 49 --clip 0.28,0.40,0.72,0.69 --corpus qml-master --root ~/Personale/QML/kb
+   ```
+   Senza `--clip` esce la pagina intera; va bene per una slide. Per un libro
+   ritaglia: `x0,y0,x1,y1` in frazioni della pagina, legenda inclusa. Il file
+   finisce in `vault/assets/`.
+3. **Guardala** con Read prima di inserirla: una sola volta, per controllare
+   che sia la figura giusta e che il taglio non mozzi etichette. Se non va,
+   correggi `--clip` e rilancia: il file viene sovrascritto.
+4. **Inseriscila** con il percorso relativo alla nota e la citazione sotto:
+   ```markdown
+   ![Sfera di Bloch](../../assets/michael-a-nielsen-isaac-l-chuang-quantum-p49-clip.png)
+   *Nielsen & Chuang, Fig. 1.3, p.49*
+   ```
+
+Al massimo due figure per nota: una gold nel corpo, una del corso in "Nel
+corso" se usa una notazione diversa. Il testo resta completo anche senza
+figura: la figura mostra, non spiega.
 
 ## La notazione
 
-Il terminale non renderizza LaTeX. Il viewer del vault sì. Da qui discendono
-due regole diverse per due posti diversi.
+**In terminale solo Unicode.** `|ψ⟩`, `⟨φ|ψ⟩`, `√N`, `⊗`, `Σ`, `π/4`, `ħ`,
+`≈`, `→`, `10⁶`, `xᵢ`, `σz`. Mai `$...$` in terminale. Una formula che non sta
+su una riga in Unicode va nella nota, e il terminale dice in quale sezione.
 
-**In chat solo Unicode.** `|ψ⟩`, `⟨φ|ψ⟩`, `√N`, `⊗`, `Σ`, `∑ᵢ`, `π/4`, `ħ`,
-`≈`, `≤`, `→`, `10⁶`, `xᵢ`, `σ_z` si scrive `σz`. Mai `$...$`, mai `\frac`,
-mai `\begin{align}`: in terminale restano caratteri di servizio che vanno letti
-a mente, ed è esattamente il lavoro che non deve fare chi studia.
-
-**Una formula che non sta su una riga in Unicode non va in chat.** Va nella
-nota. La chat dice quale: "la derivazione del diffusore è nella nota, sezione
-Worked through".
-
-**Nella nota LaTeX vero**, `$...$` inline e `$$...$$` in display. Il viewer lo
-rende con KaTeX. Là dentro non ci sono limiti di notazione.
-
-Resta valida la regola di prima: i numeri concreti vengono prima della formula,
-in tutti e due i posti.
-
-## Rigoroso e descrittivo insieme
-
-Sono due requisiti distinti, e il secondo serve a impedire che il primo degeneri.
-
-**Rigoroso** vuol dire questo:
-
-- Ogni numero è misurato o citato, mai stimato a occhio. Se il numero esatto non
-  c'è nei passaggi recuperati, scrivi che non c'è invece di arrotondare.
-- Distingui sempre cosa dice la fonte da cosa stai deducendo tu. "La slide dice
-  X" e "da X segue Y" sono due frasi diverse e vanno tenute separate.
-- Le condizioni di validità vanno scritte. Un risultato che vale solo per stati
-  puri, o solo per N molto grande, va detto lì, non dopo.
-- Se un passaggio della kb è ambiguo, dillo. Non scegliere l'interpretazione più
-  comoda in silenzio.
-
-**Descrittivo** vuol dire questo:
-
-Frasi corte **non** significa dire meno cose. Significa dire le stesse cose in
-più frasi. La brevità riguarda la singola frase, non il contenuto complessivo.
-Se un meccanismo ha tre passaggi, vanno descritti tutti e tre, uno per frase.
-
-Il confronto:
-
-- ✗ **Troppo scarno.** "Il diffusore amplifica. Serve (π/4)√N volte."
-- ✓ **Rigoroso e descrittivo.** "Il diffusore riflette tutte le ampiezze attorno
-  al loro valore medio. L'oracolo ha appena reso negativa l'ampiezza della
-  soluzione, quindi quella riflessione la fa crescere, mentre le altre calano di
-  poco. Il ciclo oracolo più diffusore va ripetuto circa (π/4)·√N volte.
-  [FCaruso p.87-88]"
-
-La seconda versione ha frasi altrettanto corte. Dice tre cose in più: cosa fa
-geometricamente il diffusore, perché il segno negativo è quello che lo fa
-funzionare, e che le due operazioni formano un ciclo.
+**Nella nota e nella chat della pagina LaTeX vero**, `$...$` inline e `$$...$$`
+in display. Dentro le tabelle Markdown usare `\vert` al posto di `|`.
 
 ## Cosa non fare
 
-Sono errori ricorrenti di chi scrive queste spiegazioni. L'utente ha detto
-esplicitamente che rallentano la lettura.
-
-**Niente frasi aforistiche.**
-- ✗ "Invecchia in silenzio."
-- ✓ "La documentazione cambia, ma la copia indicizzata resta ferma. Il risultato
-  è un passaggio che sembra affidabile e non lo è più."
-
-**Niente contrapposizioni a effetto.**
-- ✗ "Era la modifica più piccola, e quella sbagliata."
-- ✓ "Convertire in PDF sarebbe stato più rapido. Però perde i timestamp, e i
-  timestamp sono il motivo per cui questo estrattore esiste."
-
-**Niente metafore.** Il quantistico ne è già pieno di suo. Aggiungerne altre
-confonde invece di chiarire.
-
-**Niente sottintesi.** Se una frase richiede di ricostruire un passaggio
-mancante per capirla, quel passaggio va scritto.
-
-**Niente paragrafi lunghi.** Se supera le cinque righe, spezzalo e dai
-un'etichetta a ciascun pezzo.
+- **Niente frasi aforistiche** ("invecchia in silenzio").
+- **Niente contrapposizioni a effetto** ("era la modifica più piccola, e quella
+  sbagliata").
+- **Niente metafore.** L'esempio fisico sostituisce la metafora: è un sistema
+  vero, non un'immagine.
+- **Niente sottintesi.** Se una frase richiede di ricostruire un passaggio
+  mancante, quel passaggio va scritto.
+- **Niente paragrafi oltre le cinque righe.**
 
 ## Come leggere quello che torna dalla kb
 
-Ogni passaggio ha un campo `provenance`. Dice quanto fidarsi.
+Ogni passaggio ha un campo `provenance`.
 
-- **`text-layer`** — letto dal file. Affidabile.
-- **`local-vlm`** — è la **descrizione di una figura** scritta da un modello di
-  visione da 7 miliardi di parametri. Legge bene le parole, **sbaglia le
-  formule**. Non citare mai una formula da qui: scrivi "vedi slide N" e
-  rimanda alla pagina.
-- **`asr`** / **`asr-corrected`** — trascrizioni delle lezioni. I timestamp
-  sono esatti, le parole tecniche possono essere storpiate. Il corso è in
-  inglese non madrelingua.
+- **`text-layer`** — letto dal file. Affidabile per il testo. **Attenzione: le
+  equazioni in display spesso mancano** e al loro posto ci sono righe vuote
+  (succede in Nielsen & Chuang e nelle dispense LaTeX). **Si ricostruiscono.**
+  Il testo attorno di solito nomina le grandezze e dice cosa fa l'equazione
+  ("we may rewrite Eq. 1.1 as ... where θ, φ, γ are real"). Si scrive
+  l'equazione e la si verifica: coerenza con il testo prima e dopo, con le
+  definizioni, e dove si può con un caso numerico. Se l'equazione è un
+  risultato, meglio derivarla nella nota. Se il contesto non la determina in
+  modo univoco (convenzioni di segno, di normalizzazione, di ordine), scrivi
+  quale convenzione hai scelto e aggiungi "da confrontare con p.N".
+- **`local-vlm`** — descrizione di una figura scritta da un modello di visione
+  da 7B. Legge bene le parole, **sbaglia le formule**. Non citarne mai una
+  formula: rimanda alla pagina.
+- **Trascrizioni** (`type="transcript"`). Quelle del corso sono resoconti già
+  scritti in prosa, con locator `¶N-M`, e risultano `text-layer`. Si citano
+  come "Lezione NN ¶N-M". Solo i sottotitoli grezzi (`.vtt`, `.srt`, Teams con
+  orari) sono `asr` / `asr-corrected`: timestamp esatti, parole tecniche a
+  volte storpiate, inglese non madrelingua.
 
-`p.149` è la **pagina del PDF**, il numero da digitare nel visualizzatore. In un
-libro con le pagine iniziali romane non coincide con il numero stampato sul
-foglio.
+`p.149` è la **pagina del PDF**, non quella stampata.
 
 ## Le lacune vanno dette
 
-Se `kb_search` non trova niente su un punto, **non riempirlo a memoria**.
-Scrivilo sotto "Domande aperte". La lacuna è l'informazione utile: dice cosa
-chiedere al docente o quale libro aprire.
+Se la kb non ha niente su un punto e il punto non è fisica standard da
+realizzazione fisica, non riempirlo a memoria: va sotto "Domande aperte".
 
-Tre argomenti del piano sono marcati ⚠️ perché il materiale manca del tutto
-(M8 intero, le ultime lezioni di M7, Bell in M3). Su quelli la risposta corretta
-è dire che la kb non ha nulla.
+Tre argomenti del piano sono marcati ⚠️ perché il materiale del corso manca
+(M8 intero, le ultime lezioni di M7, Bell in M3). Lì il corso non dice nulla, ma
+i gold possono coprire l'argomento: dillo esplicitamente.

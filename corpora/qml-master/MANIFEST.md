@@ -37,6 +37,7 @@ source.
 | code/05_CNN.ipynb                                                                                                                                                                                                                                                      | M2     |      |         |
 | code/05_CNN_segmentation.ipynb                                                                                                                                                                                                                                         | M2     |      |         |
 | code/1_Basic_intro_qiskit_and_noise_Sampler.ipynb                                                                                                                                                                                                                      | M6     |      |         |
+| code/1_dataloader.ipynb                                                                                                                                                                                                                                                | M2     |      |         |
 | code/2_classification.ipynb                                                                                                                                                                                                                                            | M2     |      |         |
 | code/2_example_Shor.ipynb                                                                                                                                                                                                                                              | M6     |      |         |
 | code/3_focal.ipynb                                                                                                                                                                                                                                                     | M2     |      |         |
@@ -65,6 +66,10 @@ source.
 | code/cnn_pytorch.ipynb                                                                                                                                                                                                                                                 | M2     |      |         |
 | code/decision_tree.ipynb                                                                                                                                                                                                                                               | M2     |      |         |
 | code/mlp_sklearn_pytorch.ipynb                                                                                                                                                                                                                                         | M2     |      |         |
+| code/qboost.py                                                                                                                                                                                                                                                         | M7     |      |         |
+| code/qboost_README.md                                                                                                                                                                                                                                                  | M7     |      |         |
+| code/qboost_datasets.py                                                                                                                                                                                                                                                | M7     |      |         |
+| code/qboost_demo.py                                                                                                                                                                                                                                                    | M7     |      |         |
 | code/qiskitTutorial final version.ipynb                                                                                                                                                                                                                                | M4     |      |         |
 | code/report.md                                                                                                                                                                                                                                                         | M6     |      |         |
 | code/tutorialDJ.ipynb                                                                                                                                                                                                                                                  | M4     |      |         |
@@ -106,7 +111,41 @@ source.
 | papers/A Survey on Kolmogorov-Arnold Network.pdf | M7 | |  |
 | papers/A Survey on Diffusion Models for Time Series and Spatio-Temporal Data.pdf | M5 | |  |
 | papers/A brief review of quantum machine learning techniques for financial services.pdf | M8 | |  |
+| papers/Adv Quantum Tech - 2024 - Parigi - Quantum‐Noise‐Driven Generative Diffusion Models.pdf                                                                                                                                                                         | M5     |      | false   |
+| papers/Beyond-classical computation in quantum simulation.pdf                                                                                                                                                                                                          | M7     |      |         |
 | papers/Diffusion Models in Finance: A Survey.pdf | M8 | |  |
+| papers/Neven2008_Training a Binary Classifier with the Quantum Adiabatic Algorithm.pdf                                                                                                                                                                                 | M7     |      |         |
+| papers/Neven2012_QBoost Large Scale Classifier Training with Adiabatic Quantum Optimization.pdf                                                                                                                                                                        | M7     |      |         |
+| papers/Quantum Annealing: An Overview.pdf | M7 | |  |
+| papers/Effective Global Approaches for Mutual Information Base Feature Selection.pdf | M7 | |  |
+| papers/Introduction to transpilation.pdf | M6 | |  |
+| papers/Transpile with pass managers.pdf | M6 | |  |
+| papers/execution modes.pdf | M6 | |  |
+| papers/Classical feedforward and control flow.pdf | M6 | |  |
+| papers/Variational classifier.pdf | M5 | |  |
+| papers/Turning quantum nodes into Torch Layers.pdf | M5 | |  |
+| papers/Quantum models as Fourier series .pdf | M7 | |  |
+| papers/Data-reuploading classifier.pdf | M7 | |  |
+| papers/Barren plateaus in quantum neural networks .pdf | M7 | |  |
+| papers/Alleviating barren plateaus with local cost functions.pdf | M7 | |  |
+| papers/Intro to QAOA .pdf | M7 | |  |
+| papers/QAOA for MaxCut.pdf | M7 | |  |
+| papers/What is Quantum Annealing.pdf | M7 | |  |
+| papers/QUBOs and Ising Models.pdf | M7 | |  |
+| papers/Minor Embedding.pdf | M7 | |  |
+| papers/Conventions — Pulser 1.9.1 documentation.pdf | M7 | |  |
+| papers/Programming a neutral-atom QPU — Pulser 1.9.1 documentation.pdf | M7 | |  |
+| papers/Pulser — Pulser 1.9.1 documentation.pdf | M7 | |  |
+| papers/Pulser: An open-source package for the design of pulse.pdf | M7 | |  |
+| papers/QAA to solve a QUBO problem — Pulser 1.9.1 documentation.pdf | M7 | |  |
+| papers/Quantum Computing with Neutral Atoms — Pulser 1.1.1 documentation.pdf | M7 | |  |
+| papers/Register and Rydberg-Atom Interactions — Pulser 1.5.5 documentation.pdf | M7 | |  |
+| papers/Tutorial_ Programming with Pulser — Pulser 1.9.1 documentation.pdf | M7 | |  |
+| code/mutual-information-feature-selection-master/titanic.py | M7 | |  |
+| code/mutual-information-feature-selection-master/README.md | M7 | |  |
+| code/mutual-information-feature-selection-master/tests/test_titanic.py | M7 | | false |
+| code/mutual-information-feature-selection-master/tests/__init__.py | M7 | | false |
+| code/mutual-information-feature-selection-master/data/format_data.py | M7 | | false |
 | papers/QuKAN: A Quantum Circuit Born Machine Approach to Quantum Kolmogorov Arnold Networks.pdf | M7 | |  |
 | papers/Quantum Machine Learning A Hands-on Tutorial for Machine Learning Practitioners and Researchers.pdf |  | | false |
 | papers/Quantum Machine Learning Fraud Detection Project Achieves Key Technical Milestones.pdf | M7 | |  |
@@ -118,6 +157,8 @@ source.
 | slides/20260905_Algorithms_Foundations_CFCS.pptx.pdf                                                                                                                                                                                                                   | M7     |      |         |
 | slides/20260911_Circuit_Design_Embeddings_Frameworks_CFCS.pptx.pdf                                                                                                                                                                                                     | M7     |      |         |
 | slides/20260912_Classification_Applications_Limits_CFCS.pptx.pdf                                                                                                                                                                                                       | M7     |      |         |
+| slides/20260918_Neutral_Atom_Processors_CFCS.pptx.pdf                                                                                                                                                                                                                  | M7     |      |         |
+| slides/20260919_Quantum_Annealing_DWave_CFCS.pptx.pdf                                                                                                                                                                                                                  | M7     |      |         |
 | slides/CaFoscariQML - ClassificationToDetection (1).pdf                                                                                                                                                                                                                | M2     |      |         |
 | slides/FCaruso_From Quantum Computing to Quantum AI_2026.pdf                                                                                                                                                                                                           | M4     |      |         |
 | slides/Ligorio_DLMLBasics_MQML_CaFoscari.pdf                                                                                                                                                                                                                           | M2     |      |         |
