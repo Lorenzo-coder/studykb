@@ -60,6 +60,7 @@ def to_chunks(
     type_: SourceType | str,
     module: str | None,
     cfg: ChunkCfg,
+    authority: str = "course",
 ) -> list[Chunk]:
     chunks: list[Chunk] = []
     for unit in units:
@@ -81,6 +82,7 @@ def to_chunks(
                     provenance=unit.provenance,
                     module=module,
                     heading=unit.heading,
+                    authority=authority,  # type: ignore[arg-type]
                 )
             )
     return chunks

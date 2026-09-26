@@ -39,6 +39,7 @@ class Source:
     type: str
     vision: str = "auto"
     module: str | None = None
+    authority: str = "course"
     sha: str = ""
     # Set when OCR produced a searchable copy. Later stages read this, so the
     # original under /corpus is never opened for writing.
@@ -105,6 +106,7 @@ def discover(corpus: Corpus, modules: list[cal.Module]) -> tuple[list[Source], l
                 # slide treatment too, or the override only half works.
                 vision="force" if type_ == "slides" else rule.vision,
                 module=(override or {}).get("module") or _module_for(rel, corpus, by_date),
+                authority=rule.authority or ("reference" if type_ in ("book", "paper") else "course"),
             )
 
     sources = list(found.values())
@@ -256,7 +258,7 @@ _UPSTREAM: dict[str, tuple[str, ...]] = {
 # "set type: slides in MANIFEST.md to force captioning" did not force anything.
 _PER_SOURCE: dict[str, tuple[str, ...]] = {
     "vision": ("vision",),          # type: slides is what turns captioning on
-    "embed": ("module", "type"),    # both are written into every chunk payload
+    "embed": ("module", "type", "authority"),    # all written into every chunk payload
 }
 
 
@@ -458,11 +460,17 @@ def _chunks_for(cfg: Config, src: Source, work: Path) -> Iterator:
     asr = _units_file(work, src, "asr")
     units = _load_units(asr) if asr.exists() else _load_units(_units_file(work, src, "units"))
     yield from chunking.to_chunks(
-        units, source=src.rel, source_title=src.title, type_=src.type, module=src.module, cfg=cfg.chunk
+        units, source=src.rel, source_title=src.title, type_=src.type, module=src.module, cfg=cfg.chunk,
+        authority=src.authority,
     )
+    # A captions file outlives the rule that produced it: switch vision off for
+    # a source and the old captions would ride along into every re-embed.
+    if not _stage_applies("vision", src, cfg):
+        return
     captions = _load_units(_units_file(work, src, "captions"))
     yield from chunking.to_chunks(
-        captions, source=src.rel, source_title=src.title, type_="caption", module=src.module, cfg=cfg.chunk
+        captions, source=src.rel, source_title=src.title, type_="caption", module=src.module, cfg=cfg.chunk,
+        authority=src.authority,
     )
 
 

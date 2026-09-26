@@ -23,6 +23,8 @@ uv run studykb ingest --corpus qml-master --root ~/Personale/QML/kb --only visio
 uv run studykb review --corpus qml-master --root ~/Personale/QML/kb
 uv run studykb search "variational circuit" -m M4
 uv run studykb search "barren plateaus" -s "business cases"   # one file, by part of its name
+uv run studykb search "Grover" -a reference                   # books and papers only; -a course for what was taught
+uv run studykb figure Nielsen 49 --clip 0.28,0.40,0.72,0.69 --corpus qml-master --root ~/Personale/QML/kb  # page -> vault/assets/*.png
 uv run studykb stats  --corpus qml-master          # what past runs cost
 uv run pytest
 ```

@@ -14,7 +14,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from starlette.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 
 from . import calendar as cal
 from . import index, pipeline, search as search_mod
@@ -25,7 +25,7 @@ from .llm import LLM
 VAULT_SKIP = {"90-extracted"}
 
 
-def vault_file(root: Path, rel: str) -> Path | None:
+def vault_file(root: Path, rel: str, suffixes: tuple[str, ...] = (".md",)) -> Path | None:
     """A vault note by its relative path, or None if the path does not earn one.
 
     The reading routes hand a query parameter to the filesystem, so this is the
@@ -33,7 +33,7 @@ def vault_file(root: Path, rel: str) -> Path | None:
     """
     root = root.resolve()
     path = (root / rel).resolve()
-    if not path.is_relative_to(root) or path.suffix != ".md" or not path.is_file():
+    if not path.is_relative_to(root) or path.suffix not in suffixes or not path.is_file():
         return None
     return path
 
@@ -48,24 +48,36 @@ def build(cfg: Config, corpus: Corpus) -> FastMCP:
     @mcp.tool
     def kb_search(
         query: str, module: str | None = None, type: str | None = None,
-        source: str | None = None, k: int = 8,
+        source: str | None = None, authority: str | None = None, k: int = 8,
     ) -> str:
         """Search the study corpus.
 
         Returns passages with a citation and a provenance marker. `module` is an
         id like "M8"; `type` is one of book, slides, paper, transcript, caption;
         `source` keeps only files whose path contains it, case-insensitive
-        ("Business Cases", "exercise3").
+        ("Business Cases", "exercise3"); `authority` is "reference" (books,
+        papers) or "course" (slides, transcripts, lecture code).
 
         Passages marked `provenance=local-vlm` are descriptions of a figure
         produced by a local vision model, not source text: cite them as
         descriptions and open the page for anything that must be exact.
         """
         try:
-            hits = search_mod.search(client, cfg, llm, query, module=module, type_=type, source=source, k=k)
+            hits = search_mod.search(client, cfg, llm, query, module=module, type_=type, source=source,
+                                     authority=authority, k=k)
         except ValueError as e:
             return str(e)
         return search_mod.format_hits(hits)
+
+    @mcp.tool
+    def kb_crosscheck(topic: str, module: str | None = None, k: int = 4) -> str:
+        """Was a topic taught in the course, and what do books and papers say?
+
+        Runs the search twice, once on course material and once on reference
+        material, and returns both labelled. Use it to tell what is on the
+        exam from what only the literature covers.
+        """
+        return search_mod.crosscheck(client, cfg, llm, topic, module=module, k=k)
 
     @mcp.tool
     def kb_outline(module: str) -> str:
@@ -108,7 +120,7 @@ def build(cfg: Config, corpus: Corpus) -> FastMCP:
         hits = search_mod.search(
             client, cfg, llm, query,
             module=params.get("module"), type_=params.get("type"), source=params.get("source"),
-            k=int(params.get("k", cfg.retrieval.k_final)),
+            authority=params.get("authority"), k=int(params.get("k", cfg.retrieval.k_final)),
         )
         return JSONResponse([h.__dict__ for h in hits])
 
@@ -132,6 +144,14 @@ def build(cfg: Config, corpus: Corpus) -> FastMCP:
         if path is None:
             return PlainTextResponse("not found", status_code=404)
         return PlainTextResponse(path.read_text())
+
+    @mcp.custom_route("/read/asset", methods=["GET"])
+    async def read_asset(request: Request):
+        """A figure a note embeds: a page cut from a source by `studykb figure`."""
+        path = vault_file(cfg.storage.vault, request.query_params.get("p", ""), (".png",))
+        if path is None:
+            return PlainTextResponse("not found", status_code=404)
+        return FileResponse(path)
 
     @mcp.custom_route("/chat", methods=["GET", "POST"])
     async def chat(request: Request) -> JSONResponse:

@@ -9,7 +9,8 @@ without it studykb would be an application that only talks to itself.
 
 | tool | returns |
 |---|---|
-| `kb_search(query, module, type, source, k)` | passages, each with citation and provenance |
+| `kb_search(query, module, type, source, authority, k)` | passages, each with citation and provenance |
+| `kb_crosscheck(topic, module, k)` | the same search on `course` and on `reference`, labelled: was it taught, and what the literature says |
 | `kb_outline(module)` | a module's lecture-by-lecture outline, from the timetable |
 | `kb_lecture(date)` | what was taught on a date: module, topic, teacher |
 | `kb_sources()` | modules, teachers, and chunks indexed per module |
@@ -43,6 +44,7 @@ the same app turn the vault into a page:
 | route | returns |
 |---|---|
 | `/read` | `viewer.html` — sidebar, filter, markdown rendered with KaTeX |
+| `/read/asset?p=` | a `.png` under the vault — the figures `studykb figure` cuts into `assets/`. A note links them relative to itself (`../../assets/x.png`); the viewer rewrites the path |
 | `/read/list` | every `.md` under the vault, minus `90-extracted` |
 | `/read/raw?p=<rel>` | one note, verbatim |
 

@@ -93,7 +93,7 @@ into `state.db` and into filenames under the work directory. Changing
 fingerprint matches any more.
 
 A value used in exactly one module stays a constant at the top of it —
-`CHARS_PER_TOKEN` in `chunk.py`, `MAX_GROWTH` in `extract/asr.py`,
+`CHARS_PER_TOKEN` in `chunk.py`, `MIN_SIMILARITY` in `extract/asr.py`,
 `_BOILERPLATE_SHARE` in `extract/pdf.py`. Moving those to `limits.py` would put
 the number further from the reasoning that picked it.
 

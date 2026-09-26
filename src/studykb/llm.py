@@ -12,6 +12,7 @@ previous model before the next stage loads its own.
 from __future__ import annotations
 
 import base64
+import re
 import time
 from pathlib import Path
 
@@ -148,5 +149,9 @@ class LLM:
 
 
 def strip_thinking(text: str) -> str:
-    """qwen3 reasons in <think> blocks; notes must not inherit them."""
-    return text.rsplit("</think>", 1)[-1].strip() if "</think>" in text else text.strip()
+    """qwen3 reasons in <think> blocks; notes must not inherit them.
+
+    It also ends some answers with a bare ``/think`` switch, 89 times in one run.
+    """
+    text = text.rsplit("</think>", 1)[-1] if "</think>" in text else text
+    return re.sub(r"\s*/(no_)?think\s*$", "", text.strip())

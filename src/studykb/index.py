@@ -19,7 +19,7 @@ from .types import Chunk
 
 # Payload fields that get an index. Keyword fields drive filtering; `text` gets a
 # full-text index so the lexical branch of hybrid search can use it.
-KEYWORD_FIELDS = ("module", "type", "provenance", "source")
+KEYWORD_FIELDS = ("module", "type", "provenance", "source", "authority")
 
 
 def connect(cfg: Config) -> QdrantClient:
@@ -38,6 +38,11 @@ def ensure_collection(client: QdrantClient, cfg: Config) -> None:
                 f"Changing the embedding model means reindexing: drop the collection "
                 f"and clear the embed rows in state.db."
             )
+        # A field added after the collection was created still needs its index.
+        known = client.get_collection(name).payload_schema
+        for field in KEYWORD_FIELDS:
+            if field not in known:
+                client.create_payload_index(name, field, models.PayloadSchemaType.KEYWORD)
         return
 
     client.create_collection(

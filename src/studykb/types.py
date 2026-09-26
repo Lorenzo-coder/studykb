@@ -21,6 +21,10 @@ from typing import Literal
 
 Provenance = Literal["text-layer", "ocr", "local-vlm", "asr", "asr-corrected"]
 SourceType = Literal["book", "slides", "paper", "transcript", "code"]
+# reference: books and papers, the content to learn from. course: what was
+# taught, which is what the exam covers. A source property, so a slide caption
+# is course like the slide it describes.
+Authority = Literal["reference", "course"]
 
 
 @dataclass
@@ -53,6 +57,7 @@ class Chunk:
     provenance: Provenance
     module: str | None = None
     heading: str = ""
+    authority: Authority = "course"
 
     def payload(self) -> dict:
         """Everything but the id, which is already the Qdrant point id."""

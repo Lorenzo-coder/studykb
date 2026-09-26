@@ -16,3 +16,8 @@ def test_sources_become_a_must_condition():
     assert keys["source"].any == ["a.pdf", "b.pdf"]
     assert keys["module"].value == "M7"
     assert _filter(None, None, None) is None
+
+
+def test_authority_becomes_a_must_condition():
+    f = _filter(None, None, None, None, "reference")
+    assert [(c.key, c.match.value) for c in f.must] == [("authority", "reference")]

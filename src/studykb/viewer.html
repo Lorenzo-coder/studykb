@@ -55,6 +55,7 @@
     font-family: ui-monospace, monospace; font-size: .85em;
     background: var(--side); padding: 1px 4px; border-radius: 3px;
   }
+  article img { max-width: 100%; display: block; margin: 1em auto; border: 1px solid var(--line); }
   article pre { background: var(--side); padding: 12px; border-radius: 6px; overflow-x: auto; }
   article pre code { background: none; padding: 0; }
   article table { border-collapse: collapse; font-size: .9em; }
@@ -107,7 +108,10 @@ let files = [];
 // Markdown would eat the LaTeX: `a_i ... b_j` becomes italics, `\\` disappears.
 // So code and math come out first, each already rendered to HTML, and go back
 // in as placeholders once marked has run on what is left.
-function render(src) {
+// `base` is the note's path in the vault: an image written relative to the note
+// (`../../assets/x.png`, which any markdown preview also understands) is
+// fetched through /read/asset.
+function render(src, base = "") {
   const held = [];
   const hold = (html) => `%%HOLD${held.push(html) - 1}%%`;
   const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
@@ -121,7 +125,9 @@ function render(src) {
     })));
   return marked.parse(src)
     .replace(/%%HOLD(\d+)%%/g, (_, n) => held[n])
-    .replace(/<p>(<pre[\s\S]*?<\/pre>)<\/p>/g, "$1");
+    .replace(/<p>(<pre[\s\S]*?<\/pre>)<\/p>/g, "$1")
+    .replace(/<img src="(?!https?:|data:|\/)([^"]+)"/g, (_, s) =>
+      `<img src="/read/asset?p=${encodeURIComponent(decodeURIComponent(new URL(s, "http://v/" + base).pathname.slice(1)))}"`);
 }
 
 function drawTree(filter = "") {
@@ -160,7 +166,7 @@ async function paint(fresh) {
   // Un rapporto di review e' un megabyte: non si tiene sotto poll ogni 1,5 s.
   docBig = src.length > 200000;
   doc.className = res.ok ? "" : "empty";
-  doc.innerHTML = res.ok ? render(src) : "Non c'e' piu': " + path;
+  doc.innerHTML = res.ok ? render(src, path) : "Non c'e' piu': " + path;
   document.title = path.split("/").pop().replace(/\.md$/, "") + " — studykb";
   main.scrollTop = fresh ? 0 : top;
   drawTree(document.getElementById("q").value);

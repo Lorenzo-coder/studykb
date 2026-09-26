@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 import shutil
 from pathlib import Path
 
@@ -267,11 +268,48 @@ def forget(
 
 
 @app.command()
+def figure(
+    source: str = typer.Argument(..., help="Part of the source's name, case-insensitive; must match one PDF"),
+    page: int = typer.Argument(..., help="PDF page, as in the citation: p.12 -> 12"),
+    clip: str = typer.Option(None, "--clip", help="x0,y0,x1,y1 as fractions of the page, e.g. 0,0.2,0.6,0.9"),
+    corpus: str = typer.Option(..., "--corpus"),
+    root: Path = typer.Option(None, "--root"),
+    config: Path = typer.Option(None, "--config"),
+) -> None:
+    """Cut a figure out of a source page into vault/assets/, for a note to embed.
+
+    The page is rendered, not its images extracted: most figures in these PDFs
+    are vector drawings, which have no embedded image to pull out.
+    """
+    import pymupdf
+
+    cfg, corp = _load(corpus, config, root)
+    pdfs = [str(f.relative_to(corp.root)) for f in corp.root.rglob("*.pdf")]
+    found = search_mod.matching(pdfs, source)
+    if len(found) != 1:
+        raise typer.BadParameter(f"{len(found)} PDFs match: {found[:5]}", param_hint="SOURCE")
+    rel = found[0]
+    stem = re.sub(r"[^a-z0-9]+", "-", Path(rel).stem.lower())[:40].strip("-")
+    out = cfg.storage.vault / "assets" / f"{stem}-p{page}{'-clip' if clip else ''}.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with pymupdf.open(corp.root / rel) as doc:
+        pg = doc[page - 1]
+        area = None
+        if clip:
+            x0, y0, x1, y1 = (float(v) for v in clip.split(","))
+            r = pg.rect
+            area = pymupdf.Rect(r.x0 + x0 * r.width, r.y0 + y0 * r.height, r.x0 + x1 * r.width, r.y0 + y1 * r.height)
+        pg.get_pixmap(matrix=pymupdf.Matrix(2, 2), clip=area).save(out)
+    console.print(f"{rel} p.{page} -> [bold]{out.relative_to(cfg.storage.vault)}[/]")
+
+
+@app.command()
 def search(
     query: str = typer.Argument(...),
     module: str = typer.Option(None, "--module", "-m"),
     type_: str = typer.Option(None, "--type", "-t"),
     source: str = typer.Option(None, "--source", "-s", help="Only files whose path contains this, case-insensitive"),
+    authority: str = typer.Option(None, "--authority", "-a", help="reference (books, papers) or course"),
     k: int = typer.Option(None, "-k"),
     corpus: str = typer.Option(None, "--corpus", help="Needed only when the corpus has its own collection"),
     config: Path = typer.Option(None, "--config"),
@@ -281,7 +319,8 @@ def search(
     with LLM(cfg) as llm:
         try:
             hits = search_mod.search(index.connect(cfg), cfg, llm, query,
-                                     module=module, type_=type_, source=source, k=k)
+                                     module=module, type_=type_, source=source,
+                                     authority=authority, k=k)
         except ValueError as e:
             raise typer.BadParameter(str(e), param_hint="--source") from e
     console.print(search_mod.format_hits(hits))

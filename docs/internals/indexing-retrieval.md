@@ -4,9 +4,16 @@
 
 ## Qdrant, not pgvector
 
-Payload filtering (`module`, `type`, `provenance`, `source`) and a full-text
-index are native, so there is no SQL to write and no migration when a payload
-field is added.
+Payload filtering (`module`, `type`, `provenance`, `source`, `authority`) and
+a full-text index are native, so there is no SQL to write and no migration when
+a payload field is added. `ensure_collection` creates the index of a keyword
+field added after the collection existed.
+
+`authority` is `reference` (books, papers) or `course` (everything taught). It
+follows the type unless a `corpus.yaml` rule sets it: lecture notes and exercises
+filed under `papers/` are course. One index with a field, not two collections —
+two would mean two searches per question and scores that cannot be ranked
+together.
 
 `ensure_collection` refuses to proceed when the collection's vector size differs
 from `models.embed.dim`:

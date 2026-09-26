@@ -73,23 +73,31 @@ assembled from two sources: the terms listed in `corpus.yaml`, and the lecture
 titles and teacher names parsed out of the timetable
 ([calendar.md](calendar.md)). Those are precisely the words ASR gets wrong.
 
-Two guards, because a model that repairs terminology can also invent it:
+Guards, because a model that repairs terminology can also invent it:
 
 ```python
-if not fixed or len(fixed) > len(unit.text) * MAX_GROWTH:   # 1.35
-    out.append(unit)      # keep the raw window
+if is_prose(unit):                       # locator "¶12-40": already written text
+    keep it, provenance text-layer, no model call
+if not fixed or _LEAKS.search(fixed) or _similarity(unit.text, fixed) < MIN_SIMILARITY:  # 0.9
+    out.append(unit)                     # keep the raw window
 ```
 
-A "correction" much longer than its input is the model rambling, and gets
-discarded. And the raw text is kept in `extra["raw"]` next to the corrected
-version, so the two can always be compared.
+`_similarity` is the word overlap with punctuation and case ignored. Fixing
+"cue bit" changes a few words; a summary, an answer about something else, or
+the prompt echoed back changes most of them. `_LEAKS` catches the model talking
+about the task ("Corrected Text:") when the rest is faithful. The raw text is
+kept in `extra["raw"]` next to every accepted correction.
 
 Output carries `provenance: asr-corrected`.
 
-### Status
+### What the first run did (26 September)
 
-Written, wired, and **never run**: there are no transcripts yet. See
-[DELIVERY.md](../DELIVERY.md) steps 2.4 and 3.2.
+Every QML transcript is a Word file already cleaned into prose, so the stage had
+nothing to repair. It still changed 276 of 331 windows. About 40 were damaged:
+summaries, unrelated answers (combinatorics in a lecture on neutral atoms),
+the prompt echoed back. Terms were also "corrected" wrongly: neuron → qubit,
+Pasqal → Pasquale. And 89 ended in a stray `/think`. Since then prose windows
+skip the model, and the guards above apply to real captions.
 
 ---
 

@@ -489,3 +489,43 @@ def test_vault_file_refuses_everything_outside_the_vault(tmp_path):
     for rel in ("../secret.md", "10-modules/../../secret.md", str(tmp_path / "secret.md"),
                 "notes.txt", "10-modules", "missing.md", ""):
         assert vault_file(vault, rel) is None, rel
+
+    (vault / "assets").mkdir()
+    (vault / "assets" / "bloch-p5.png").write_bytes(b"png")
+    assert vault_file(vault, "assets/bloch-p5.png", (".png",)) == vault / "assets" / "bloch-p5.png"
+    assert vault_file(vault, "assets/bloch-p5.png") is None           # the note route stays .md only
+    assert vault_file(vault, "10-modules/03-grover.md", (".png",)) is None
+
+
+def test_authority_follows_the_type_unless_a_rule_says_otherwise(tmp_path):
+    from studykb.config import Corpus, SourceRule
+    from studykb.pipeline import discover
+
+    for rel in ("books/nielsen.pdf", "slides/deck.pdf", "papers/Assessment - May.pdf", "papers/neven.pdf"):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_bytes(b"%PDF")
+    corpus = Corpus(domain="t", root=tmp_path, manifest_dir=tmp_path, sources=[
+        SourceRule(glob="books/*.pdf", type="book"),
+        SourceRule(glob="slides/*.pdf", type="slides"),
+        SourceRule(glob="papers/Assessment*.pdf", type="paper", authority="course"),
+        SourceRule(glob="papers/*.pdf", type="paper"),
+    ])
+    got = {s.rel: s.authority for s in discover(corpus, [])[0]}
+    assert got == {"books/nielsen.pdf": "reference", "slides/deck.pdf": "course",
+                   "papers/Assessment - May.pdf": "course", "papers/neven.pdf": "reference"}
+
+
+def test_captions_left_behind_by_a_vision_rule_are_not_indexed(tmp_path, cfg):
+    """A pilot forced captions on one guide, then the rule was removed. The
+    captions file stayed on disk, and every re-embed put it back in the index."""
+    from studykb.pipeline import Source, _chunks_for, _save_units, _units_file
+    from studykb.types import Unit
+
+    pdf = tmp_path / "g.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    src = Source(path=pdf, rel="papers/g.pdf", type="paper", vision="never", sha="abc")
+    _save_units(_units_file(tmp_path, src, "units"), [Unit(locator="p.1", text="body text")])
+    _save_units(_units_file(tmp_path, src, "captions"), [Unit(locator="p.1", text="a blue line", provenance="local-vlm")])
+
+    types = {c.type for c in _chunks_for(cfg, src, tmp_path)}
+    assert types == {"paper"}

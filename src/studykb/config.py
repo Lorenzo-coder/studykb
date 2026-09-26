@@ -157,6 +157,8 @@ class Config(BaseModel):
                     "w": self.transcript.window_seconds,
                     "m": m.llm.name,
                     "p": prompt_version,
+                    # v2: prose windows skipped, similarity guard (see extract/asr.py)
+                    "code": "v2",
                 }
             ),
             "vision": _hash_obj({"cfg": self.extract.vision, "m": m.vlm.name, "p": prompt_version}),
@@ -191,6 +193,8 @@ class SourceRule(BaseModel):
     type: Literal["book", "slides", "paper", "transcript", "code"]
     vision: Literal["auto", "force", "never"] = "auto"
     enabled: bool = True
+    # None: book and paper are reference, everything else course.
+    authority: Literal["reference", "course"] | None = None
 
 
 class ModuleRule(BaseModel):

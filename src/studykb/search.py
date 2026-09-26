@@ -38,6 +38,7 @@ class Hit:
     type: str
     provenance: str
     heading: str
+    authority: str = "course"
 
     def cite(self) -> str:
         return f"{self.source_title} {self.locator}"
@@ -61,7 +62,8 @@ def matching(sources: list[str], fragment: str) -> list[str]:
 
 
 def _filter(
-    module: str | None, type_: str | None, terms: list[str] | None, sources: list[str] | None = None
+    module: str | None, type_: str | None, terms: list[str] | None, sources: list[str] | None = None,
+    authority: str | None = None,
 ) -> models.Filter | None:
     must: list[models.Condition] = []
     if sources:
@@ -70,6 +72,8 @@ def _filter(
         must.append(models.FieldCondition(key="module", match=models.MatchValue(value=module)))
     if type_:
         must.append(models.FieldCondition(key="type", match=models.MatchValue(value=type_)))
+    if authority:
+        must.append(models.FieldCondition(key="authority", match=models.MatchValue(value=authority)))
     should = [models.FieldCondition(key="text", match=models.MatchText(text=t)) for t in (terms or [])]
     if not must and not should:
         return None
@@ -85,6 +89,7 @@ def search(
     module: str | None = None,
     type_: str | None = None,
     source: str | None = None,
+    authority: str | None = None,
     k: int | None = None,
 ) -> list[Hit]:
     k = k or cfg.retrieval.k_final
@@ -96,8 +101,8 @@ def search(
         result = client.query_points(
             collection_name=cfg.storage.collection,
             prefetch=[
-                models.Prefetch(query=vector, filter=_filter(module, type_, None, sources), limit=r.k_dense),
-                models.Prefetch(query=vector, filter=_filter(module, type_, terms, sources), limit=r.k_lexical),
+                models.Prefetch(query=vector, filter=_filter(module, type_, None, sources, authority), limit=r.k_dense),
+                models.Prefetch(query=vector, filter=_filter(module, type_, terms, sources, authority), limit=r.k_lexical),
             ],
             query=models.FusionQuery(fusion=models.Fusion.RRF),
             limit=k,
@@ -107,7 +112,7 @@ def search(
         result = client.query_points(
             collection_name=cfg.storage.collection,
             query=vector,
-            query_filter=_filter(module, type_, None, sources),
+            query_filter=_filter(module, type_, None, sources, authority),
             limit=k,
             with_payload=True,
         )
@@ -126,6 +131,7 @@ def _hit(point: models.ScoredPoint) -> Hit:
         type=p.get("type", "?"),
         provenance=p.get("provenance", "?"),
         heading=p.get("heading", ""),
+        authority=p.get("authority", "?"),
     )
 
 
@@ -143,7 +149,26 @@ def format_hits(hits: list[Hit], max_chars: int = SEARCH_PASSAGE) -> str:
         head = f" — {h.heading}" if h.heading else ""
         blocks.append(
             f"[{i}] {h.cite()}{head}\n"
-            f"    module={h.module or '-'} type={h.type} provenance={h.provenance} score={h.score:.3f}\n"
+            f"    module={h.module or '-'} type={h.type} authority={h.authority} provenance={h.provenance} score={h.score:.3f}\n"
             f"{text}"
         )
     return "\n\n".join(blocks)
+
+
+def crosscheck(
+    client: QdrantClient, cfg: Config, llm: LLM, topic: str, *, module: str | None = None, k: int = 4
+) -> str:
+    """The same query on both sides of the corpus, each labelled.
+
+    Course material says whether a topic was taught, so whether it is on the
+    exam; reference material says what is true. An empty side is the answer,
+    not a failure: "not covered in the course" is worth knowing.
+    """
+    out = []
+    for authority, label, empty in (
+        ("course", "COURSE — slides, transcripts: was it taught?", "Not covered in the course material."),
+        ("reference", "REFERENCE — books, papers: what the literature says", "No reference source found."),
+    ):
+        hits = search(client, cfg, llm, topic, module=module, authority=authority, k=k)
+        out.append(f"## {label}\n\n{format_hits(hits) if hits else empty}")
+    return "\n\n".join(out)
