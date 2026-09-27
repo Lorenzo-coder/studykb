@@ -57,15 +57,20 @@ Gli `Assessment` sono domande d'esame: si usano al passo 4, non come contenuto.
    del calendario, con le domande in fondo), non riscriverla: rileggila, dai
    l'URL e parti dalle sue "Domande di verifica". Correggila solo se le
    risposte mostrano che non è chiara (passo 8).
-   **Altrimenti scrivi la nota** in `vault/10-modules/<Mn>/<NN>-<slug>.md`, con la
+   **Altrimenti scrivi la nota** in `vault/10-modules/<Mn>/<codice>-<slug>.md`, con la
    struttura descritta sotto, e con una figura se una fonte ne ha una (vedi
    "Le figure"). Questa struttura prevale su
    `studykb/docs/agents/note-synthesis.md`.
+   **Ogni verifica numerica si salva** in `vault/15-verifiche/<codice>-<descrizione>.py`,
+   mai solo come comando di una riga, e si aggiunge una riga a `15-verifiche/README.md`.
+   **Il nome del file è il codice del piano**: lettera della parte più numero a
+   due cifre, con l'eventuale suffisso (`E03-qubit-sfera-di-bloch.md`,
+   `D20-...`, `H02b-...`). Una nota che copre due codici prende il primo.
 6. **Rispondi dove è arrivata la domanda.** Se l'utente ha scritto in terminale,
    rispondi in terminale. Se ha scritto nella chat della pagina, rispondi lì e
    in terminale scrivi solo una riga con l'URL. Il contenuto della risposta è
    sempre questo, in quest'ordine e niente altro:
-   - l'URL della nota, `http://127.0.0.1:8077/read#/10-modules/<Mn>/<NN>-<slug>.md`
+   - l'URL della nota, `http://127.0.0.1:8077/read#/10-modules/<Mn>/<codice>-<slug>.md`
    - un riassunto da cinque a otto righe
    - una riga che dice cosa c'è nella nota e non nel riassunto
    - **tre domande di verifica**, di cui almeno una sulla realizzazione fisica
@@ -242,6 +247,43 @@ su una riga in Unicode va nella nota, e il terminale dice in quale sezione.
 
 **Nella nota e nella chat della pagina LaTeX vero**, `$...$` inline e `$$...$$`
 in display. Dentro le tabelle Markdown usare `\vert` al posto di `|`.
+
+## La nota modello
+
+`10-modules/M3/D01-fisica-classica-limiti.md` è lo standard, approvato dall'utente
+il 27/09/2026. Ogni nota nuova o rivista deve reggere il confronto. In pratica:
+
+- **Frasi complete e collegate.** Ogni frase dice da dove viene quello che
+  afferma e perché serve dopo. Niente frasi spezzate in gruppi di tre parole
+  ("Il calcolo non la fissa. Si pone uguale a zero, e il controllo è l'urto."):
+  si scrive il ragionamento intero ("La (9) contiene solo la derivata di E,
+  quindi determina E a meno di una costante che va fissata con un fatto
+  fisico...").
+- **Ogni passaggio algebrico scritto.** Quale regola si usa (prodotto, funzione
+  composta, identità), che cosa si sostituisce, che cosa si semplifica.
+  L'utente non ha la parte A di matematica: la regola si richiama in una riga.
+- **Un risultato non si "pone"**: si ricava, o si dice da quale fatto
+  sperimentale o da quale fonte viene.
+- **Schuld & Petruccione come fonte principale** per tutto ciò che il libro
+  tratta (parti E-J): la nota deve coprire l'argomento come il libro, non
+  lasciare vuoti.
+- **Passaggi espliciti, non dimostrazioni fuori scopo.** Ogni passaggio che
+  serve si scrive e si spiega; una dimostrazione lunga o tecnica che non serve
+  all'argomento si cita, non si svolge.
+- **Approvate anche** D04, D06, D10 (27/09/2026, "decisamente molto meglio"):
+  derivazioni a passi numerati, collegamento alla realizzazione sui qubit,
+  Schuld citato dove tratta davvero l'argomento.
+
+## La copia di sicurezza
+
+`~/Personale` non è un repository git. Il file vero è
+`~/Personale/studykb/skills/studia/SKILL.md` (versionato in studykb), e
+`~/Personale/.claude/skills/studia/SKILL.md` è un symlink verso di lui. Alcuni
+strumenti di modifica sostituiscono il symlink con un file normale: dopo ogni
+modifica controlla con `ls -l` che sia ancora un link; se non lo è, copia il file
+in studykb e rifai il link. Poi commit e push di studykb, e aggiorna anche la
+seconda copia in `~/Personale/QML/vault/99-skill/studia/SKILL.md` (istruzioni in
+`99-skill/README.md`).
 
 ## Cosa non fare
 

@@ -12,6 +12,11 @@ They live in the repo for one reason: `Personale` is not a git repository, so
 without this they are unversioned — one bad edit and the style rules that took
 a session to agree on are gone.
 
+**Check after every edit.** Some editing tools replace the symlink with a plain
+file; this happened once, and the copy here fell behind for a day. `ls -l` on the
+link must show `->`. If it doesn't, copy the plain file here and recreate the
+link. A second backup lives in the vault, `QML/vault/99-skill/`.
+
 The symlink points at the file, not at the directory. A skill directory that is
 itself a symlink risks being skipped by anything that walks the tree checking
 `isDirectory()`.
